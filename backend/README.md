@@ -229,7 +229,54 @@ condensai/
 
 ---
 
-## 5. Automated Verification & Test Results
+## 6. Module 6: Interactive 3D Digital Twin & Real-Time System Visualization
+
+Module 6 transforms CondensAI into an engineering 3D digital twin platform built with React Three Fiber, Three.js, and Tailwind CSS. The 3D model renders the entire thermodynamic flow path and updates dynamically using real physics simulation outputs from the backend engine.
+
+### 3D Physical Spatial Layout & Components:
+```
+[GPU Cluster Rack] ──(Primary Loop)──► [Counterflow Heat Exchanger] ──(Secondary Loop)──► [Thermal Reservoir]
+                                                    │                                            │
+                                          (Physical Partition)                            (Hot Feed Pipe)
+                                                    │                                            ▼
+                                                    ▼                                    [AGMD Module (5 Layers)]
+                                            [Zero Mixing Boundary]                               │
+                                                                                          (Pure Distillate)
+                                                                                                 ▼
+                                                                                      [Freshwater Collector]
+```
+
+1. **GPU Server Rack Chassis & Cold Plates (`GPUCluster3D` & `GPUUnit3D`)**:
+   - Renders 1 to 4 stacked GPU compute nodes with anodized heatsinks, copper microchannel cold plates, and status indicators.
+   - Dynamic emissive heat maps driven by individual junction temperatures ($T_j$).
+2. **Primary Coolant Loop (`PrimaryCoolantLoop3D`)**:
+   - Closed dielectric coolant piping connecting GPU cold plates to the heat exchanger at $0.05\text{ kg/s}$.
+   - Shows hot leg ($T_p$) and cooled return leg ($T_{h,out}$).
+3. **Counterflow Heat Exchanger (`HeatExchanger3D`)**:
+   - Plate pack assembly illustrating countercurrent heat exchange via the Effectiveness–NTU method ($\varepsilon \approx 0.763$).
+   - Explicit impervious physical partition guaranteeing zero fluid contamination between primary dielectric coolant and secondary saline water.
+4. **Secondary Water Circulation Loop (`SecondaryWaterLoop3D`)**:
+   - Saline water piping transferring recovered thermal energy to the storage reservoir at $0.02\text{ kg/s}$.
+5. **Secondary Thermal Storage Reservoir (`Reservoir3D`)**:
+   - Cylindrical insulated tank showing bulk water temperature ($T_s$), stored thermal enthalpy, and an ambient safety baseline ring at $20.0^\circ\text{C}$.
+6. **AGMD Desalination Membrane Module (`AGMDModule3D`)**:
+   - 5 physically distinct layers:
+     - **Layer 1: Hot Saline Feed Channel** ($T_{\text{feed}}$ entry).
+     - **Layer 2: Hydrophobic Microporous Membrane (PTFE)** ($0.22\ \mu\text{m}$ pores, liquid barrier).
+     - **Layer 3: Stagnant Air Gap** ($3\text{ mm}$ width) with explanatory vapor diffusion particle markers modulated by vapor flux ($J_m$).
+     - **Layer 4: Chilled Condensing Plate** ($T_{\text{cold\_plate}} = 20^\circ\text{C}$) with condensate water film.
+     - **Layer 5: Distillate Drainage Trough** routing pure water downward.
+   - **Cutaway Inspection Mode**: Toggle between closed protective casing and cross-sectional internal view.
+7. **Graduated Freshwater Collector (`FreshwaterCollector3D`)**:
+   - Laboratory-grade graduated glass cylinder with dynamic water fill level proportional to actual cumulative distillate yield ($V_L$ / $V_{mL}$) and instantaneous production rate ($L/h$).
+
+### Interactive Telemetry & Controls:
+- **Viewpoint Presets**: One-click smooth camera lerp to *Full System Overview*, *GPU Cluster*, *Heat Exchanger*, *Storage Reservoir*, and *AGMD Module*.
+- **Display Toggles**: Live 3D engineering labels, continuous thermal gradient heatmap ($20^\circ\text{C}$ Deep Blue $\to 80^\circ\text{C}$ Deep Red), flow animation, and AGMD cutaway.
+- **Simulation Time-Scrubber & Playback**: Real-time play/pause with 1x, 2x, and 5x speed multipliers, scrubbing to any simulated second ($t \in [0, t_{\text{end}}]$).
+- **Component Inspector**: Slide-over panel displaying real-time telemetry, underlying physical governing equations, and circuit isolation integrity guarantees.
+- **Unified Navigation**: Seamless switching between **3D Digital Twin** and **Analytics & Charts** sharing the exact same simulation state with zero redundant network overhead.
+
 
 The test suite contains **109 passing automated tests** across all 5 modules:
 

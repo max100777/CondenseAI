@@ -86,6 +86,7 @@ export interface AnalyticsSummary {
 }
 
 export interface MultiGPUSimulationResponse {
+  parameters?: any;
   gpu_count: number;
   aggregate_power_w: number;
   gpu_comparison: GPUComparisonItem[];

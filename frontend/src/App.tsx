@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Droplets } from 'lucide-react';
+import { Droplets, Box, BarChart3 } from 'lucide-react';
 import { GPUConfig, MultiGPUSimulationResponse } from './types';
 import { MultiGPUControlPanel } from './components/MultiGPUControlPanel';
 import { WaterProductionOverview } from './components/WaterProductionOverview';
@@ -7,8 +7,13 @@ import { ThermalEfficiencyDashboard } from './components/ThermalEfficiencyDashbo
 import { GPUComparisonView } from './components/GPUComparisonView';
 import { TimeSeriesCharts } from './components/TimeSeriesCharts';
 import { ScalingComparisonView } from './components/ScalingComparisonView';
+import { DigitalTwinPage } from './digital-twin/DigitalTwinPage';
+
+type ActiveTab = '3d' | 'analytics';
 
 export const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('3d');
+
   const [gpus, setGpus] = useState<GPUConfig[]>([
     {
       gpu_id: 'GPU-1',
@@ -88,8 +93,8 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500/30">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 py-3.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
               <Droplets className="w-6 h-6 text-white" />
@@ -98,26 +103,51 @@ export const App: React.FC = () => {
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold tracking-tight text-white">CondensAI</h1>
                 <span className="px-2 py-0.5 text-[11px] font-semibold bg-cyan-950 text-cyan-400 border border-cyan-800 rounded">
-                  v1.4.0 (Module 5)
+                  v1.5.0 (Module 6)
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Turning AI's Wasted Heat into Clean Water — Multi-GPU Thermal & AGMD Digital Twin
+              <p className="text-xs text-slate-400 hidden sm:block">
+                Turning AI's Wasted Heat into Clean Water — Multi-GPU Thermal &amp; AGMD Digital Twin
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-300 font-medium">Physics Twin Online</span>
-            </div>
+          {/* Navigation Mode Tabs */}
+          <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('3d')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === '3d'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Box className="w-4 h-4" />
+              <span>3D Digital Twin</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'analytics'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Analytics &amp; Charts</span>
+            </button>
+          </div>
+
+          {/* Online Indicator */}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-slate-300 font-medium">Physics Engine Online</span>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+      {/* Main View Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
         {error && (
           <div className="bg-rose-950/40 border border-rose-800/80 rounded-xl p-4 text-xs text-rose-300 flex items-center justify-between">
             <span>{error}</span>
@@ -127,53 +157,86 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* 1. Multi-GPU Control Panel */}
-        <MultiGPUControlPanel
-          gpus={gpus}
-          setGpus={setGpus}
-          enableAgmd={enableAgmd}
-          setEnableAgmd={setEnableAgmd}
-          durationS={durationS}
-          setDurationS={setDurationS}
-          timeStepS={timeStepS}
-          setTimeStepS={setTimeStepS}
-          onSimulate={runSimulation}
-          onReset={resetSimulation}
-          loading={loading}
-        />
+        {/* Tab 1: 3D Digital Twin View */}
+        {activeTab === '3d' && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {/* Multi-GPU Quick Controls */}
+            <MultiGPUControlPanel
+              gpus={gpus}
+              setGpus={setGpus}
+              enableAgmd={enableAgmd}
+              setEnableAgmd={setEnableAgmd}
+              durationS={durationS}
+              setDurationS={setDurationS}
+              timeStepS={timeStepS}
+              setTimeStepS={setTimeStepS}
+              onSimulate={runSimulation}
+              onReset={resetSimulation}
+              loading={loading}
+            />
 
-        {/* 2. Water Production Overview */}
-        <WaterProductionOverview
-          analytics={simulationResult?.analytics}
-          totalFreshwaterL={simulationResult?.total_freshwater_produced_l}
-        />
-
-        {/* 3. Thermal Efficiency Dashboard */}
-        <ThermalEfficiencyDashboard
-          analytics={simulationResult?.analytics}
-          totalGpuHeatJ={simulationResult?.total_heat_generated_j}
-          totalHxHeatJ={simulationResult?.total_heat_recovered_hx_j}
-          totalAgmdHeatJ={simulationResult?.total_heat_to_agmd_j}
-        />
-
-        {/* 4. GPU Comparison View */}
-        {simulationResult && (
-          <GPUComparisonView
-            gpuComparison={simulationResult.gpu_comparison}
-            aggregatePowerW={simulationResult.aggregate_power_w}
-          />
+            {/* Interactive 3D Digital Twin Canvas */}
+            <DigitalTwinPage
+              simulationResult={simulationResult}
+              gpuConfigs={gpus}
+              onRunSimulation={runSimulation}
+              isLoading={loading}
+            />
+          </div>
         )}
 
-        {/* 5. Dynamic Time-Series Charts */}
-        {simulationResult && <TimeSeriesCharts timeSeries={simulationResult.time_series} />}
+        {/* Tab 2: Analytics & Charts Dashboard */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Multi-GPU Control Panel */}
+            <MultiGPUControlPanel
+              gpus={gpus}
+              setGpus={setGpus}
+              enableAgmd={enableAgmd}
+              setEnableAgmd={setEnableAgmd}
+              durationS={durationS}
+              setDurationS={setDurationS}
+              timeStepS={timeStepS}
+              setTimeStepS={setTimeStepS}
+              onSimulate={runSimulation}
+              onReset={resetSimulation}
+              loading={loading}
+            />
 
-        {/* 6. Scaling Comparison View (1 vs 2 vs 4 GPUs) */}
-        <ScalingComparisonView />
+            {/* Water Production Overview */}
+            <WaterProductionOverview
+              analytics={simulationResult?.analytics}
+              totalFreshwaterL={simulationResult?.total_freshwater_produced_l}
+            />
+
+            {/* Thermal Efficiency Dashboard */}
+            <ThermalEfficiencyDashboard
+              analytics={simulationResult?.analytics}
+              totalGpuHeatJ={simulationResult?.total_heat_generated_j}
+              totalHxHeatJ={simulationResult?.total_heat_recovered_hx_j}
+              totalAgmdHeatJ={simulationResult?.total_heat_to_agmd_j}
+            />
+
+            {/* GPU Comparison View */}
+            {simulationResult && (
+              <GPUComparisonView
+                gpuComparison={simulationResult.gpu_comparison}
+                aggregatePowerW={simulationResult.aggregate_power_w}
+              />
+            )}
+
+            {/* Dynamic Time-Series Charts */}
+            {simulationResult && <TimeSeriesCharts timeSeries={simulationResult.time_series} />}
+
+            {/* Scaling Comparison View (1 vs 2 vs 4 GPUs) */}
+            <ScalingComparisonView />
+          </div>
+        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 text-slate-500 text-xs py-6 px-6 text-center">
-        <p>CondensAI Physics Digital Twin • Modules 1–5 Fully Integrated • Antoine AGMD & Multi-GPU Heat Recovery</p>
+        <p>CondensAI Physics Digital Twin • Modules 1–6 Fully Integrated • Interactive 3D Real-Time Twin &amp; Analytics</p>
       </footer>
     </div>
   );
