@@ -7,6 +7,39 @@ import {
   SelectedComponentInfo,
 } from '../types';
 
+/**
+ * Formats a freshwater volume in litres into a human-readable string with sensible unit scaling:
+ * - < 0.001 L (< 1 mL): displayed in µL (e.g. 35.1 µL)
+ * - 0.001 L to < 1.0 L (1 mL to < 1000 mL): displayed in mL (e.g. 2.50 mL)
+ * - >= 1.0 L: displayed in L (e.g. 1.500 L)
+ */
+export function formatFreshwaterVolume(litres: number): { text: string; value: number; unit: string } {
+  const safeL = Math.max(0, isNaN(litres) ? 0 : litres);
+  if (safeL < 0.001) {
+    const uL = safeL * 1e6;
+    const formatted = uL < 10 ? (Math.round(uL * 100) / 100).toFixed(2) : (Math.round(uL * 10) / 10).toFixed(1);
+    return {
+      text: `${formatted} µL`,
+      value: uL,
+      unit: 'µL',
+    };
+  } else if (safeL < 1.0) {
+    const mL = safeL * 1e3;
+    const formatted = (Math.round(mL * 100) / 100).toFixed(2);
+    return {
+      text: `${formatted} mL`,
+      value: mL,
+      unit: 'mL',
+    };
+  } else {
+    return {
+      text: `${safeL.toFixed(3)} L`,
+      value: safeL,
+      unit: 'L',
+    };
+  }
+}
+
 export function useDigitalTwinData(
   simulationResult: MultiGPUSimulationResponse | null,
   activeStepIndex: number
@@ -15,8 +48,10 @@ export function useDigitalTwinData(
     if (!simulationResult || !simulationResult.time_series || simulationResult.time_series.length === 0) {
       return null;
     }
-    const idx = Math.max(0, Math.min(activeStepIndex, simulationResult.time_series.length - 1));
-    return simulationResult.time_series[idx];
+    // Floor to guarantee integer indexing and clamp strictly within bounds
+    const rawIdx = isNaN(activeStepIndex) ? 0 : Math.floor(activeStepIndex);
+    const idx = Math.max(0, Math.min(rawIdx, simulationResult.time_series.length - 1));
+    return simulationResult.time_series[idx] || null;
   }, [simulationResult, activeStepIndex]);
 
   const telemetry: DigitalTwinTelemetryState = useMemo(() => {
@@ -263,15 +298,16 @@ export function useDigitalTwinData(
 
       case 'collector':
       case 'freshwater': {
+        const volMetric = formatFreshwaterVolume(telemetry.cumulative_freshwater_volume_l);
         return {
           type: 'collector',
           name: 'Freshwater Distillate Collector',
           description: 'Graduated collection channel receiving pure condensed permeate water.',
           telemetry: [
-            { label: 'Cumulative Distillate Yield', value: telemetry.cumulative_freshwater_volume_l >= 0.001 ? `${telemetry.cumulative_freshwater_volume_l.toFixed(4)} L` : `${telemetry.cumulative_freshwater_volume_ml.toFixed(2)} mL`, status: 'nominal' },
-            { label: 'Pure Distillate Yield (mL)', value: `${telemetry.cumulative_freshwater_volume_ml.toFixed(2)} mL` },
-            { label: 'Instantaneous Inflow', value: `${telemetry.freshwater_production_rate_l_h.toFixed(4)} L/h` },
+            { label: 'Cumulative Distillate Yield', value: volMetric.text, status: 'nominal' },
+            { label: 'Instantaneous Inflow', value: `${(telemetry.freshwater_production_rate_l_h * 1000).toFixed(2)} mL/h (${telemetry.freshwater_production_rate_l_h.toFixed(4)} L/h)` },
             { label: 'Purity / Rejection', value: '> 99.9% Salt Rejection', status: 'nominal' },
+            { label: 'Thermal Source', value: '100% Recovered GPU Waste Heat', status: 'nominal' },
           ],
         };
       }

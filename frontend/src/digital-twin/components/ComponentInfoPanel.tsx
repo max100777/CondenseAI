@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, ShieldCheck, Activity, Cpu, RefreshCw, Database, Droplets } from 'lucide-react';
 import { ComponentType, TelemetryState } from '../types';
+import { formatFreshwaterVolume } from '../hooks/useDigitalTwinData';
 
 interface Props {
   selectedComponent: ComponentType | null;
@@ -257,9 +258,7 @@ export const ComponentInfoPanel: React.FC<Props> = ({
                 <div>
                   <div className="text-slate-400">Cumulative Distillate</div>
                   <div className="text-emerald-400 font-mono font-medium">
-                    {telemetry.freshwaterVolumeL < 0.1
-                      ? `${(telemetry.freshwaterVolumeL * 1000).toFixed(2)} mL`
-                      : `${telemetry.freshwaterVolumeL.toFixed(4)} L`}
+                    {formatFreshwaterVolume(telemetry.freshwaterVolumeL).text}
                   </div>
                 </div>
                 <div>
