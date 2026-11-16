@@ -40,10 +40,14 @@ export const WaterProductionOverview: React.FC<Props> = ({ analytics, totalFresh
         <div className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4">
           <div className="text-xs text-slate-400 font-medium">Total Freshwater Produced</div>
           <div className="text-2xl font-bold text-cyan-300 mt-1">
-            {totalL >= 0.001 ? `${totalL.toFixed(4)} L` : `${totalML.toFixed(2)} mL`}
+            {totalL >= 1.0
+              ? `${totalL.toFixed(3)} L`
+              : totalL >= 0.001
+              ? `${totalML.toFixed(2)} mL`
+              : `${(totalL * 1e6).toFixed(1)} µL`}
           </div>
           <div className="text-xs text-slate-500 mt-1">
-            {totalML.toFixed(2)} mL pure distillate
+            {totalL >= 0.001 ? `${totalML.toFixed(2)} mL pure distillate` : `${(totalL * 1e6).toFixed(1)} µL (${totalML.toFixed(3)} mL)`}
           </div>
         </div>
 

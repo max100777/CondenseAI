@@ -27,9 +27,10 @@ export const DigitalTwinPage: React.FC<Props> = ({
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('overview');
   const [selectedComponent, setSelectedComponent] = useState<ComponentType | null>(null);
 
+  // Fix 4: Thermal heatmap shader enabled by default for immediate physical feedback
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showLabels: true,
-    showHeatmap: false,
+    showHeatmap: true,
     flowAnimation: true,
     agmdCutaway: false,
   });
@@ -45,16 +46,22 @@ export const DigitalTwinPage: React.FC<Props> = ({
 
   const currentTime = activeStep ? activeStep.time_s : 0;
 
-  // Reset step index when new simulation result arrives
+  // Fix 2: When a fresh simulation result arrives, reset to start and automatically begin playback
   useEffect(() => {
     if (timeSeries.length > 0) {
       setActiveStepIndex(0);
+      setIsPlaying(true);
     }
   }, [simulationResult]);
 
   // Playback timer loop
   const requestRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
+
+  // Correctly extract simulation dt (time_step_s) from parameters or timeSeries delta
+  const simulationDt =
+    simulationResult?.parameters?.time_step_s ??
+    (timeSeries.length > 1 ? timeSeries[1].time_s - timeSeries[0].time_s : 1.0);
 
   useEffect(() => {
     if (!isPlaying || timeSeries.length <= 1) {
@@ -66,12 +73,12 @@ export const DigitalTwinPage: React.FC<Props> = ({
     const animate = (time: number) => {
       if (lastTimeRef.current != null) {
         const deltaSec = (time - lastTimeRef.current) / 1000;
-        // Advance steps based on real simulation dt
-        const dt = simulationResult?.parameters?.dt ?? 1.0;
-        const stepsToAdvance = (deltaSec * playbackSpeed) / dt;
+        // Advance step fraction based on actual simulation dt and playback speed multiplier
+        const stepsToAdvance = (deltaSec * playbackSpeed) / Math.max(0.001, simulationDt);
 
         setActiveStepIndex((prev) => {
           const next = prev + stepsToAdvance;
+          // Stop automatically at the final timestep without crashing or looping prematurely
           if (next >= timeSeries.length - 1) {
             setIsPlaying(false);
             return timeSeries.length - 1;
@@ -88,11 +95,11 @@ export const DigitalTwinPage: React.FC<Props> = ({
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isPlaying, playbackSpeed, timeSeries.length, simulationResult?.parameters?.dt]);
+  }, [isPlaying, playbackSpeed, timeSeries.length, simulationDt]);
 
   const handleSeekTime = (time: number) => {
     if (timeSeries.length === 0) return;
-    // Find closest step index
+    // Find closest valid historical step index
     let closestIdx = 0;
     let minDiff = Infinity;
     for (let i = 0; i < timeSeries.length; i++) {
@@ -103,6 +110,18 @@ export const DigitalTwinPage: React.FC<Props> = ({
       }
     }
     setActiveStepIndex(closestIdx);
+  };
+
+  const handleTogglePlay = () => {
+    if (isPlaying) {
+      setIsPlaying(false);
+    } else {
+      // If paused at or near the end, restart from timestep 0
+      if (activeStepIndex >= timeSeries.length - 1) {
+        setActiveStepIndex(0);
+      }
+      setIsPlaying(true);
+    }
   };
 
   const handleToggleOption = (key: keyof DisplayOptions) => {
@@ -165,7 +184,7 @@ export const DigitalTwinPage: React.FC<Props> = ({
         totalDuration={totalDuration}
         onSeekTime={handleSeekTime}
         isPlaying={isPlaying}
-        onTogglePlay={() => setIsPlaying(!isPlaying)}
+        onTogglePlay={handleTogglePlay}
         playbackSpeed={playbackSpeed}
         onChangeSpeed={setPlaybackSpeed}
         hasData={timeSeries.length > 0}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Html } from '@react-three/drei';
+import { formatFreshwaterVolume } from '../hooks/useDigitalTwinData';
 
 interface Props {
   position?: [number, number, number];
@@ -15,7 +16,7 @@ export const FreshwaterCollector3D: React.FC<Props> = ({
   position = [5.2, -1.6, 0.0],
   cumulativeVolumeL,
   productionRateLh,
-  maxDisplayVolumeL = 0.05, // Scaled for lab-scale membrane area
+  maxDisplayVolumeL = 0.0001, // 100 µL baseline for laboratory-scale membrane distillation
   isSelected,
   onSelect,
   showLabels,
@@ -23,19 +24,18 @@ export const FreshwaterCollector3D: React.FC<Props> = ({
   const cylinderRadius = 0.28;
   const cylinderHeight = 0.9;
 
-  // Fill fraction between 0.05 (empty base) and 0.95
+  const volMetric = formatFreshwaterVolume(cumulativeVolumeL);
+
+  // Dynamic capacity: scales gracefully from micro-scale laboratory runs (100 µL) up to large batch volumes
+  // Baseline: 0 volume produces strictly 0 water height (no false water)
+  const referenceCapacityL = Math.max(0.0001, maxDisplayVolumeL);
   const fillFraction = Math.min(
     0.95,
-    Math.max(0.04, maxDisplayVolumeL > 0 ? (cumulativeVolumeL / maxDisplayVolumeL) * 0.9 : 0.04)
+    Math.max(0.0, referenceCapacityL > 0 ? (cumulativeVolumeL / referenceCapacityL) * 0.9 : 0.0)
   );
-  const waterHeight = cylinderHeight * fillFraction;
+  const waterHeight = Math.max(0.005, cylinderHeight * fillFraction);
   const waterCenterY = -cylinderHeight / 2 + waterHeight / 2;
-
-  // Convert volume to human readable units (mL or L)
-  const volumeDisplay =
-    cumulativeVolumeL < 0.1
-      ? `${(cumulativeVolumeL * 1000).toFixed(1)} mL`
-      : `${cumulativeVolumeL.toFixed(3)} L`;
+  const hasWater = cumulativeVolumeL > 1e-8;
 
   return (
     <group position={position} onClick={(e) => { e.stopPropagation(); onSelect(); }}>
@@ -74,33 +74,35 @@ export const FreshwaterCollector3D: React.FC<Props> = ({
         </mesh>
       ))}
 
-      {/* Internal Water Volume (Pure Freshwater) */}
-      <group position={[0, waterCenterY, 0]}>
-        <mesh>
-          <cylinderGeometry
-            args={[cylinderRadius - 0.015, cylinderRadius - 0.015, waterHeight, 32]}
-          />
-          <meshStandardMaterial
-            color="#38bdf8"
-            transparent
-            opacity={0.7}
-            roughness={0.08}
-            metalness={0.1}
-            emissive="#0284c7"
-            emissiveIntensity={0.2}
-          />
-        </mesh>
-        {/* Top water meniscus / surface */}
-        <mesh position={[0, waterHeight / 2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[cylinderRadius - 0.015, 32]} />
-          <meshStandardMaterial
-            color="#7dd3fc"
-            transparent
-            opacity={0.85}
-            roughness={0.05}
-          />
-        </mesh>
-      </group>
+      {/* Internal Water Volume (Pure Freshwater) - Only rendered when water is physically present */}
+      {hasWater && (
+        <group position={[0, waterCenterY, 0]}>
+          <mesh>
+            <cylinderGeometry
+              args={[cylinderRadius - 0.015, cylinderRadius - 0.015, waterHeight, 32]}
+            />
+            <meshStandardMaterial
+              color="#38bdf8"
+              transparent
+              opacity={0.7}
+              roughness={0.08}
+              metalness={0.1}
+              emissive="#0284c7"
+              emissiveIntensity={0.2}
+            />
+          </mesh>
+          {/* Top water meniscus / surface */}
+          <mesh position={[0, waterHeight / 2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[cylinderRadius - 0.015, 32]} />
+            <meshStandardMaterial
+              color="#7dd3fc"
+              transparent
+              opacity={0.85}
+              roughness={0.05}
+            />
+          </mesh>
+        </group>
+      )}
 
       {/* Inflow Stream Droplets from AGMD trough down to collector */}
       {productionRateLh > 0.0001 && (
@@ -130,10 +132,13 @@ export const FreshwaterCollector3D: React.FC<Props> = ({
           <div className="bg-slate-900/90 text-white text-[11px] px-2 py-1 rounded shadow-lg border border-slate-700 whitespace-nowrap backdrop-blur-sm pointer-events-none">
             <div className="font-semibold text-emerald-400">Freshwater Collection</div>
             <div className="text-[10px] text-slate-300">
-              Total: <b className="text-white">{volumeDisplay}</b>
+              Total: <b className="text-white font-mono">{volMetric.text}</b>
             </div>
             <div className="text-[10px] text-slate-300">
-              Rate: <b className="text-emerald-300">{(productionRateLh * 1000).toFixed(2)} mL/h</b> ({productionRateLh.toFixed(4)} L/h)
+              Rate: <b className="text-emerald-300 font-mono">{(productionRateLh * 1000).toFixed(2)} mL/h</b> ({productionRateLh.toFixed(4)} L/h)
+            </div>
+            <div className="text-[9px] text-slate-400 font-mono">
+              Scale: 0 – {formatFreshwaterVolume(referenceCapacityL).text}
             </div>
             <div className="text-[9px] text-emerald-400/80 font-mono">Purity: &gt;99.9% TDS &lt;5 ppm</div>
           </div>
