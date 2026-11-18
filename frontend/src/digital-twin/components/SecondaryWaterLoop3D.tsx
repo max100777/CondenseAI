@@ -6,6 +6,7 @@ interface Props {
   reservoirTempC: number;
   isSelected: boolean;
   onSelect: () => void;
+  transparent: boolean;
   showHeatmap: boolean;
 }
 
@@ -14,6 +15,7 @@ export const SecondaryWaterLoop3D: React.FC<Props> = ({
   reservoirTempC,
   isSelected,
   onSelect,
+  transparent,
   showHeatmap,
 }) => {
   const heatedColor = getTemperatureColor(secondaryOutletTempC);
@@ -28,6 +30,7 @@ export const SecondaryWaterLoop3D: React.FC<Props> = ({
           <cylinderGeometry args={[0.065, 0.065, 1.7, 16]} />
           <meshStandardMaterial
             color={showHeatmap ? heatedColor : '#f59e0b'}
+            transparent={transparent} opacity={transparent ? 0.22 : 1} depthWrite={!transparent}
             metalness={0.8}
             roughness={0.25}
             emissive={showHeatmap ? heatedColor : '#000000'}
@@ -49,6 +52,7 @@ export const SecondaryWaterLoop3D: React.FC<Props> = ({
           <cylinderGeometry args={[0.065, 0.065, 1.7, 16]} />
           <meshStandardMaterial
             color={showHeatmap ? reservoirColor : '#10b981'}
+            transparent={transparent} opacity={transparent ? 0.22 : 1} depthWrite={!transparent}
             metalness={0.8}
             roughness={0.25}
             emissive={showHeatmap ? reservoirColor : '#000000'}
@@ -70,6 +74,7 @@ export const SecondaryWaterLoop3D: React.FC<Props> = ({
           <cylinderGeometry args={[0.06, 0.06, 1.7, 16]} />
           <meshStandardMaterial
             color={showHeatmap ? reservoirColor : '#0284c7'}
+            transparent={transparent} opacity={transparent ? 0.22 : 1} depthWrite={!transparent}
             metalness={0.8}
             roughness={0.25}
             emissive={showHeatmap ? reservoirColor : '#000000'}

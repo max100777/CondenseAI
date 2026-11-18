@@ -6,6 +6,7 @@ interface Props {
   primaryOutletTempC: number;
   isSelected: boolean;
   onSelect: () => void;
+  transparent: boolean;
   showHeatmap: boolean;
 }
 
@@ -14,6 +15,7 @@ export const PrimaryCoolantLoop3D: React.FC<Props> = ({
   primaryOutletTempC,
   isSelected,
   onSelect,
+  transparent,
   showHeatmap,
 }) => {
   const hotColor = getTemperatureColor(primaryTempC);
@@ -28,6 +30,7 @@ export const PrimaryCoolantLoop3D: React.FC<Props> = ({
           <cylinderGeometry args={[0.07, 0.07, 2.2, 16]} />
           <meshStandardMaterial
             color={showHeatmap ? hotColor : '#f43f5e'}
+            transparent={transparent} opacity={transparent ? 0.22 : 1} depthWrite={!transparent}
             metalness={0.8}
             roughness={0.2}
             emissive={showHeatmap ? hotColor : '#000000'}
@@ -49,6 +52,7 @@ export const PrimaryCoolantLoop3D: React.FC<Props> = ({
           <cylinderGeometry args={[0.07, 0.07, 2.2, 16]} />
           <meshStandardMaterial
             color={showHeatmap ? cooledColor : '#38bdf8'}
+            transparent={transparent} opacity={transparent ? 0.22 : 1} depthWrite={!transparent}
             metalness={0.8}
             roughness={0.2}
             emissive={showHeatmap ? cooledColor : '#000000'}

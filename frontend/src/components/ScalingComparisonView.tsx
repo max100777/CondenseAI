@@ -26,9 +26,11 @@ interface BenchmarkTier {
 export const ScalingComparisonView: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [data, setData] = useState<BenchmarkTier[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const runScalingBenchmark = async () => {
     setLoading(true);
+    setError(null);
     try {
       const runConfig = async (n: number) => {
         const gpus = Array.from({ length: n }, (_, i) => ({
@@ -98,40 +100,37 @@ export const ScalingComparisonView: React.FC = () => {
       setData(tiers);
     } catch (err) {
       console.error(err);
+      setError('The benchmark could not be completed. Confirm that the simulation API is running and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl backdrop-blur">
+    <section className="panel">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+          <div className="rounded-lg bg-cyan-50 p-2 text-cyan-800">
             <BarChart3 className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-100">Multi-GPU Scaling Comparison</h2>
-            <p className="text-xs text-slate-400">1 GPU vs 2 GPUs vs 4 GPUs Physics Benchmark (60s Baseline)</p>
+            <h2 className="panel-heading">Scaling benchmark</h2>
+            <p className="panel-subtitle">Controlled 60-second comparison of one, two, and four GPU configurations.</p>
           </div>
         </div>
 
         <button
           onClick={runScalingBenchmark}
           disabled={loading}
-          className={`px-4 py-2 rounded-lg font-medium text-xs transition flex items-center gap-2 ${
-            loading
-              ? 'bg-purple-800 text-slate-300 cursor-wait'
-              : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20'
-          }`}
+          className="btn-primary"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
           {loading ? 'Running Multi-Tier Benchmark...' : 'Run 1 vs 2 vs 4 GPU Benchmark'}
         </button>
       </div>
 
-      <div className="bg-purple-950/20 border border-purple-900/30 rounded-lg p-3 mb-5 text-xs text-purple-200/90 flex items-start gap-2">
-        <AlertCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
+      <div className="mb-5 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-800" />
         <div>
           <strong>Non-Linear Thermodynamics:</strong> While electrical power scales linearly (350W → 700W → 1400W),
           vapor pressure and freshwater production scale exponentially via the Antoine equation as reservoir
@@ -139,13 +138,15 @@ export const ScalingComparisonView: React.FC = () => {
         </div>
       </div>
 
+      {error && <p className="mb-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{error}</p>}
+
       {data ? (
         <div className="space-y-6">
           {/* Comparison Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400 bg-slate-950/40">
+            <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
                   <th className="py-2.5 px-3 font-medium">Cluster Scale</th>
                   <th className="py-2.5 px-3 font-medium text-right">Power</th>
                   <th className="py-2.5 px-3 font-medium text-right">Heat Gen. (kJ)</th>
@@ -156,21 +157,21 @@ export const ScalingComparisonView: React.FC = () => {
                   <th className="py-2.5 px-3 font-medium text-right">Heat Utilization</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-slate-100">
                 {data.map((row) => (
-                  <tr key={row.gpus} className="hover:bg-slate-800/30 transition">
-                    <td className="py-2.5 px-3 font-semibold text-purple-300">{row.label}</td>
-                    <td className="py-2.5 px-3 text-right text-slate-100">{row.aggregatePowerW} W</td>
-                    <td className="py-2.5 px-3 text-right text-rose-300">{row.heatGeneratedKJ.toFixed(1)} kJ</td>
-                    <td className="py-2.5 px-3 text-right text-cyan-300">{row.heatRecoveredKJ.toFixed(1)} kJ</td>
-                    <td className="py-2.5 px-3 text-right text-amber-300 font-medium">
+                  <tr key={row.gpus} className="transition hover:bg-slate-50">
+                    <td className="py-2.5 px-3 font-semibold text-cyan-800">{row.label}</td>
+                    <td className="py-2.5 px-3 text-right text-slate-800">{row.aggregatePowerW} W</td>
+                    <td className="py-2.5 px-3 text-right text-rose-700">{row.heatGeneratedKJ.toFixed(1)} kJ</td>
+                    <td className="py-2.5 px-3 text-right text-cyan-800">{row.heatRecoveredKJ.toFixed(1)} kJ</td>
+                    <td className="py-2.5 px-3 text-right font-medium text-amber-700">
                       {row.finalReservoirTempC.toFixed(2)} °C
                     </td>
-                    <td className="py-2.5 px-3 text-right text-emerald-300">{row.agmdEnergyKJ.toFixed(2)} kJ</td>
-                    <td className="py-2.5 px-3 text-right text-cyan-400 font-bold">
+                    <td className="py-2.5 px-3 text-right text-emerald-700">{row.agmdEnergyKJ.toFixed(2)} kJ</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-cyan-800">
                       {(row.freshwaterYieldL * 1000).toFixed(2)} mL
                     </td>
-                    <td className="py-2.5 px-3 text-right text-slate-200">
+                    <td className="py-2.5 px-3 text-right text-slate-700">
                       {row.heatUtilizationPct.toFixed(1)}%
                     </td>
                   </tr>
@@ -196,11 +197,11 @@ export const ScalingComparisonView: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="p-8 border border-dashed border-slate-800 rounded-lg text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
-          <TrendingUp className="w-6 h-6 text-slate-600" />
-          <span>Click "Run 1 vs 2 vs 4 GPU Benchmark" to compute live comparative physics scaling curves.</span>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 p-8 text-center text-xs text-slate-500">
+          <TrendingUp className="h-6 w-6 text-slate-400" />
+          <span>Run the benchmark to calculate live comparative scaling data.</span>
         </div>
       )}
-    </div>
+    </section>
   );
 };

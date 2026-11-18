@@ -13,13 +13,17 @@ export type ComponentType =
   | 'secondary_loop'
   | null;
 
-export type CameraPreset = 'overview' | 'gpu' | 'hx' | 'reservoir' | 'agmd';
+export type CameraPreset = 'overview' | 'gpu' | 'hx' | 'reservoir' | 'agmd' | 'collector';
 
 export interface DisplayOptions {
   showLabels: boolean;
   showHeatmap: boolean;
   flowAnimation: boolean;
   agmdCutaway: boolean;
+  transparentPipes: boolean;
+  exploded: boolean;
+  plates: boolean;
+  energy: boolean;
 }
 
 export type DigitalTwinDisplayOptions = DisplayOptions;

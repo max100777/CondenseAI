@@ -2,7 +2,7 @@ import React from 'react';
 
 export const DigitalTwinLegend: React.FC = () => {
   return (
-    <div className="absolute bottom-4 left-4 z-10 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl p-3 text-white shadow-xl text-xs space-y-3 pointer-events-auto max-w-xs">
+    <details className="absolute bottom-3 left-3 z-10 max-w-xs space-y-3 rounded-lg border border-slate-700 bg-slate-900/95 p-2.5 text-xs text-white"><summary className="cursor-pointer">Thermal and fluid legend</summary>
       {/* 1. Thermal Spectrum Bar */}
       <div>
         <div className="text-[11px] font-semibold text-slate-300 mb-1 flex justify-between">
@@ -52,6 +52,6 @@ export const DigitalTwinLegend: React.FC = () => {
           </span>
         </div>
       </div>
-    </div>
+    </details>
   );
 };

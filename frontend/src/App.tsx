@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Droplets, Box, BarChart3 } from 'lucide-react';
+import { Droplets, Box, BarChart3, CircleCheck } from 'lucide-react';
 import { GPUConfig, MultiGPUSimulationResponse } from './types';
 import { MultiGPUControlPanel } from './components/MultiGPUControlPanel';
 import { WaterProductionOverview } from './components/WaterProductionOverview';
@@ -91,35 +91,35 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500/30">
+    <div className="app-shell flex flex-col selection:bg-cyan-100">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 py-3 shadow-sm backdrop-blur">
+        <div className="content-width flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-800 shadow-sm">
               <Droplets className="w-6 h-6 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white">CondensAI</h1>
-                <span className="px-2 py-0.5 text-[11px] font-semibold bg-cyan-950 text-cyan-400 border border-cyan-800 rounded">
-                  v1.5.0 (Module 6)
+                <h1 className="text-xl font-bold tracking-tight text-slate-900">CondensAI</h1>
+                <span className="rounded border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[11px] font-semibold text-cyan-800">
+                  Engineering Digital Twin
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
-                Turning AI's Wasted Heat into Clean Water — Multi-GPU Thermal &amp; AGMD Digital Twin
+              <p className="hidden text-xs text-slate-500 sm:block">
+                Waste-heat recovery and AGMD desalination simulation environment
               </p>
             </div>
           </div>
 
           {/* Navigation Mode Tabs */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1">
             <button
               onClick={() => setActiveTab('3d')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === '3d'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  ? 'bg-white text-cyan-800 shadow-sm'
+                  : 'text-slate-500 hover:bg-white hover:text-slate-800'
               }`}
             >
               <Box className="w-4 h-4" />
@@ -129,8 +129,8 @@ export const App: React.FC = () => {
               onClick={() => setActiveTab('analytics')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'analytics'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  ? 'bg-white text-cyan-800 shadow-sm'
+                  : 'text-slate-500 hover:bg-white hover:text-slate-800'
               }`}
             >
               <BarChart3 className="w-4 h-4" />
@@ -139,19 +139,19 @@ export const App: React.FC = () => {
           </div>
 
           {/* Online Indicator */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-slate-300 font-medium">Physics Engine Online</span>
+          <div className="hidden items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs lg:flex">
+            <CircleCheck className="h-3.5 w-3.5 text-emerald-700" />
+            <span className="font-medium text-slate-700">{loading ? 'Computing simulation' : error ? 'Request failed' : simulationResult ? 'Simulation complete' : 'Awaiting simulation'}</span>
           </div>
         </div>
       </header>
 
       {/* Main View Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+      <main className="content-width flex-1 space-y-6 py-6">
         {error && (
-          <div className="bg-rose-950/40 border border-rose-800/80 rounded-xl p-4 text-xs text-rose-300 flex items-center justify-between">
+          <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-200">
+            <button onClick={() => setError(null)} className="font-semibold text-rose-800 hover:text-rose-950">
               Dismiss
             </button>
           </div>
@@ -161,6 +161,8 @@ export const App: React.FC = () => {
         {activeTab === '3d' && (
           <div className="space-y-4 animate-in fade-in duration-200">
             {/* Multi-GPU Quick Controls */}
+            <details className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <summary className="cursor-pointer px-5 py-3 text-sm font-semibold text-slate-700">Simulation configuration <span className="ml-2 font-normal text-slate-500">{gpus.length} GPUs · {durationS} s</span></summary>
             <MultiGPUControlPanel
               gpus={gpus}
               setGpus={setGpus}
@@ -175,6 +177,7 @@ export const App: React.FC = () => {
               loading={loading}
             />
 
+            </details>
             {/* Interactive 3D Digital Twin Canvas */}
             <DigitalTwinPage
               simulationResult={simulationResult}
@@ -235,8 +238,8 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 text-slate-500 text-xs py-6 px-6 text-center">
-        <p>CondensAI Physics Digital Twin • Modules 1–6 Fully Integrated • Interactive 3D Real-Time Twin &amp; Analytics</p>
+      <footer className="mt-6 border-t border-slate-200 bg-white py-5 text-center text-xs text-slate-500">
+        <p>CondensAI • Physics-based GPU waste-heat recovery and AGMD desalination model • Academic demonstration interface</p>
       </footer>
     </div>
   );

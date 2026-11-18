@@ -12,6 +12,8 @@ interface Props {
   secondaryOutletTempC: number;
   isSelected: boolean;
   onSelect: () => void;
+  plates: boolean;
+  exploded: boolean;
   showLabels: boolean;
   showHeatmap: boolean;
 }
@@ -25,6 +27,7 @@ export const HeatExchanger3D: React.FC<Props> = ({
   secondaryOutletTempC,
   isSelected,
   onSelect,
+  plates, exploded,
   showLabels,
   showHeatmap,
 }) => {
@@ -37,7 +40,7 @@ export const HeatExchanger3D: React.FC<Props> = ({
   return (
     <group position={hxPos} onClick={(e) => { e.stopPropagation(); onSelect(); }}>
       {/* Exchanger Main Stainless Steel Frame */}
-      <mesh castShadow receiveShadow>
+      <mesh visible={!plates && !exploded} castShadow receiveShadow>
         <boxGeometry args={[1.1, 2.2, 0.9]} />
         <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.2} />
       </mesh>
@@ -45,7 +48,7 @@ export const HeatExchanger3D: React.FC<Props> = ({
       {/* Internal Plate Pack (Alternating Flow Channels) */}
       <group position={[0, 0, 0]}>
         {[-0.3, -0.15, 0.0, 0.15, 0.3].map((z, idx) => (
-          <mesh key={z} position={[0, 0, z]}>
+          <mesh key={z} position={[exploded ? z : 0, 0, z * (exploded ? 4 : 1)]}>
             <boxGeometry args={[0.95, 1.8, 0.04]} />
             <meshStandardMaterial
               color={idx % 2 === 0 ? (showHeatmap ? primaryInColor : '#0284c7') : (showHeatmap ? secondaryOutColor : '#059669')}
