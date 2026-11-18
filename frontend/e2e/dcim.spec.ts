@@ -1,58 +1,61 @@
-import { test, expect } from "@playwright/test";
-test("campus operations, equipment, scenarios and reporting", async ({
+import { test, expect } from '@playwright/test';
+
+test('Integrated Engineering Digital Twin: Campus -> Hall -> Rack -> GPU -> Simulation & Analytics', async ({
   page,
-}, info) => {
+}) => {
   const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
-  await expect(
-    page.getByRole("heading", { name: "Campus overview" }),
-  ).toBeVisible();
-  await expect(page.locator("canvas")).toBeVisible();
-  await expect(page.locator(".dc-kpis")).toContainText("10.752");
-  await page.getByRole("button", { name: "Pause", exact: true }).click();
-  await page.screenshot({ path: info.outputPath("campus.png") });
-  await page
-    .getByRole("button", { name: "Cooling systems", exact: true })
-    .click();
-  await page.getByLabel("Locate rack").selectOption("17");
-  await page
-    .getByLabel("Fault at selected asset")
-    .selectOption("CRAH shutdown");
-  await page.getByLabel("Replay time (s)").fill("180");
-  await expect(page.locator(".dc-inspect")).toContainText("Active warning");
-  await page
-    .getByRole("button", { name: "Electrical paths", exact: true })
-    .click();
-  await page
-    .getByLabel("Fault at selected asset")
-    .selectOption("UPS A failure");
-  await expect(page.locator(".dc-controls")).not.toHaveCount(0);
-  await expect(page.getByText(/PDU A · 0 \/ 12 kW/)).toBeVisible();
-  await page
-    .getByRole("button", { name: "Rack explorer", exact: true })
-    .click();
-  await page.getByRole("button", { name: "View rear" }).click();
-  await page.getByRole("button", { name: "X-ray off" }).click();
-  await page.getByLabel("Installed device").selectOption({ index: 1 });
-  await page.screenshot({ path: info.outputPath("rack.png") });
-  await page
-    .getByRole("button", { name: "Capacity planning", exact: true })
-    .click();
-  await page.getByLabel("IT allocation (kW)").fill("10");
-  await page.getByRole("button", { name: "Apply & save locally" }).click();
-  await expect(page.locator(".dc-kpis")).toContainText("15.358");
-  await page
-    .getByRole("button", { name: "Energy report", exact: true })
-    .click();
-  const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export rack inventory CSV" }).click();
-  expect((await download).suggestedFilename()).toBe(
-    "simulated-rack-inventory.csv",
-  );
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth),
-  ).toBeLessThanOrEqual(390);
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  // 1. Load Campus Overview (Route: /)
+  await page.goto('/');
+  await expect(page.locator('.dc-brand')).toContainText('CONDENSAI');
+  await expect(page.locator('.dc-version-badge')).toContainText('INTEGRATED');
+
+  // Verify KPI summary tiles
+  const kpis = page.locator('.dc-kpis');
+  await expect(kpis).toContainText('Total IT Power');
+  await expect(kpis).toContainText('Heat Exchanger Transfer');
+  await expect(kpis).toContainText('AGMD Distillate Rate');
+
+  // Verify 3D canvas is present
+  await expect(page.locator('canvas')).toBeVisible();
+
+  // 2. Select Hall A (AI Training)
+  await page.getByRole('button', { name: /Hall A/ }).first().click();
+  await expect(page.locator('.dc-breadcrumb')).toContainText('Hall A');
+  await expect(page.locator('.dc-inspect')).toContainText('Hall A — AI Training');
+  await expect(page.locator('.dc-inspect')).toContainText('High-intensity compute');
+
+  // 3. Select Rack A01 inside Hall A
+  await page.getByRole('button', { name: 'Rack A01' }).click();
+  await expect(page.locator('.dc-breadcrumb')).toContainText('Rack A01');
+  await expect(page.locator('.dc-inspect')).toContainText('42U Liquid-Cooled Server Cabinet');
+
+  // 4. Select GPU A01-GPU01 inside Rack A01
+  await page.getByRole('button', { name: /GPU A01-GPU01/ }).click();
+  await expect(page.locator('.dc-breadcrumb')).toContainText('GPU A01-GPU01');
+  await expect(page.locator('.dc-placeholder-alert')).toContainText('Physics Simulation Connected');
+  await expect(page.locator('.dc-inspect')).toContainText('Die Junction Temp');
+
+  // 5. Test Path Tracing & Heatmap Selection
+  await page.getByRole('button', { name: 'Trace Coolant Circuit' }).click();
+  await page.getByRole('combobox', { name: '3D Heatmap' }).selectOption('gpuTemp');
+
+  // 6. Test Run Summary Report Modal
+  await page.getByRole('button', { name: 'Run Report' }).click();
+  await expect(page.locator('.dc-modal-box')).toContainText('CondensAI Facility Run Summary');
+  await expect(page.locator('.dc-modal-box')).toContainText('TOTAL FRESHWATER PRODUCED');
+  await page.getByRole('button', { name: 'Close Report' }).click();
+  await expect(page.locator('.dc-modal-box')).toHaveCount(0);
+
+  // 7. Back navigation via breadcrumb to Campus
+  await page.getByRole('button', { name: 'Campus' }).click();
+  await expect(page.locator('.dc-inspect')).toContainText('CAMPUS ENGINEERING CONTEXT');
+
+  // 8. Verify GPU Thermal Lab route (/?lab)
+  await page.goto('/?lab');
+  await expect(page.getByText('Campus operations')).toBeVisible();
+
+  // Verify no uncaught page errors
   expect(errors).toEqual([]);
 });
