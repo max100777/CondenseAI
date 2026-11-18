@@ -1,4 +1,45 @@
-# CondensAI — Turning AI's Wasted Heat into Clean Water
+# HYPERSCALE DCIM
+
+The default workspace opens the campus operations console. It includes eight data halls, 1,280 selectable racks, 17,920 installed devices, simulated cooling and electrical scenarios, local capacity plans and downloadable reports. The original CondensAI GPU thermal lab is accessible from the console header or at `/?lab`.
+
+## Run locally
+
+Use Node 24 and npm. From `frontend`, run `npm ci` and `npm run dev`, then open the local URL printed by Vite (normally port 3000). The campus simulation runs in the browser. To use the thermal lab, install `backend/requirements.txt` in a Python environment and run `uvicorn backend.main:app --port 8000` from the repository root.
+
+From `frontend`, run `npm test`, `npm run lint` and `npm run build`. For the end-to-end suite install Chromium with `npx playwright install chromium` and run `npm run test:e2e`. For installed Google Chrome use `DCIM_CHROME_CHANNEL=chrome npm run test:e2e`. The suite captures campus and rack screenshots under `frontend/test-results`.
+
+## Campus implementation
+
+| Location under frontend | Responsibility |
+| --- | --- |
+| src/dcim/model.ts | Stable IDs, device placements, coordinates, deterministic operating state, electrical and thermal calculations |
+| src/dcim/FacilityScene.tsx | Instanced campus and hall views, airflow, inlet field, front/rear device inspection |
+| src/dcim/Plant.tsx | Selectable electrical intake, generator and chilled-water equipment |
+| src/dcim/Console.tsx and Trend.tsx | Operational views, planning, timeline, reports and scenario histories |
+| scripts/seed-campus.mjs | Relational SQLite schema and repeatable inventory seed |
+| src/dcim/model.test.mjs and e2e/ | Calculation, inventory and browser checks |
+
+Run `npm run seed:campus` to create `frontend/campus.sqlite`, or supply a destination with `npm run seed:campus -- /path/to/file.sqlite`. Hall, row, zone, switch, rack, device and A/B feed records originate from the browser's inventory generator. SQLite is a portable inventory snapshot. The live console stores allocation plans in this browser's local storage.
+
+## Engineering assumptions
+
+- Each device belongs to contiguous rack units. Rack space percentage equals occupied U divided by available U times 100. Cabinet width and depth are 0.6 and 1.2 m. The reference layout has 0.68 m bay pitch and 2.7 m row pitch with alternating rack fronts.
+- IT power sums configured device allocations multiplied by scenario demand. At 70% load the reference campus draws 10,752 kW from 15,360 kW allocated. Independent A/B branches normally share demand equally. On A-side loss the surviving branch carries the load. The branch rating is 12 kW. Utility-loss and generator-supplied states are instantaneous assumptions.
+- Three-phase line current equals 1000 × kW / (√3 × line-to-line volts × PF). The single-phase calculation omits √3. Apparent kVA equals kW / PF. Default inputs are 415 V and 0.95 PF.
+- The campus represents an air-cooled, chilled-water CRAH system. Each rack contributes approximately its IT demand as sensible heat. Air temperature rise in K equals heat in kW divided by mass flow in kg/s and specific heat of 1.006 kJ/(kg·K). Supply defaults to 21 °C at 0.84 kg/s per rack. A 60-second first-order response approaches a recirculation-adjusted equilibrium. A disabled unit uses a 0.12 kg/s residual-flow assumption for the temperature estimate. Humidity is an illustrative temperature-dependent estimate.
+- Inlet sensors are simulated. The thermal floor uses inverse squared-distance weighting across the selected hall. The particles illustrate the chosen aisle route. Neither field is a CFD computation.
+- Modeled mechanical power equals served sensible load divided by assumed COP 4. Other facility overhead is modeled as 10% of IT power. Normal baseline facility demand is 14,515.2 kW with 3,763.2 kW overhead. Instantaneous PUE proxy equals facility / IT power. A zero IT denominator is reported as unavailable. Cooling tons are IT sensible kW / 3.51685.
+- Changing demand, fault or capacity starts a fresh scenario period. Replay regenerates the deterministic state at the requested second. Scenario energy uses simulated duration and power, with trapezoidal integration available for timestamped samples. Forecast energy uses constant facility kW × hours. The baseline gives 348,364.8 kWh/day and 127,153,152 kWh/year. Cost equals kWh × assumed tariff and emissions equal kWh × assumed kg CO₂e/kWh. Values retain floating-point precision internally and round only for display.
+
+## Performance and scope
+
+The campus cabinet bodies, front panels and top indicators use three instanced draws for 1,280 racks. The rack explorer renders the selected inventory individually. In a local Node 24 benchmark of 200 samples after one warm-up sample, calculation and aggregation across all racks took 0.073 ms median and 0.269 ms at the 95th percentile. These figures measure the calculation engine only.
+
+The implemented scope is a single-campus deterministic simulator with local allocation/height planning. Multi-site operations, persistent multi-user telemetry streaming, arbitrary topology editing, device installation/removal workflows, validated upstream protection coordination, and collision-aware walkthroughs remain future work. The generator and switch scenarios use simplified transfer and availability rules. The visual/sensor model is schematic and uses representative equipment.
+
+The Sunbird visualization and screenshot pages were consulted for navigation, inspection and monitoring capabilities. The OnRamp video title was accessible, but individual frames were unavailable for inspection. The campus geometry and airflow paths are original.
+
+## CondensAI thermal lab
 
 CondensAI is a physics-based digital twin that models the recovery of thermal waste heat generated by high-density AI data center GPUs and harnesses that recovered heat to power an Air-Gap Membrane Distillation (AGMD) desalination process to produce clean, drinkable water.
 

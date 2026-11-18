@@ -27,6 +27,8 @@ venv/
 ENV/
 
 # Testing
+frontend/test-results/
+frontend/campus.sqlite
 .pytest_cache/
 .coverage
 htmlcov/
