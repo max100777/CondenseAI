@@ -60,6 +60,9 @@ export const DigitalTwinPage: React.FC<Props> = ({
     activeStepIndex
   );
 
+  const [rackOpen, setRackOpen] = useState(false);
+  const [selectedGPU, setSelectedGPU] = useState<string | null>(null);
+  const inspected = activeStep?.gpu_states.find(gpu => gpu.gpu_id === selectedGPU);
   const currentTime = activeStep ? activeStep.time_s : 0;
   const [tourIndex, setTourIndex] = useState<number | null>(null);
   const stage = tourIndex === null ? null : tour[tourIndex];
@@ -158,6 +161,21 @@ export const DigitalTwinPage: React.FC<Props> = ({
     }
   };
 
+  function inspectGPU(id: string) {
+    setTourIndex(null);
+    setCameraPreset('gpu');
+    setSelectedComponent(null);
+    setRackOpen(true);
+    setSelectedGPU(id);
+  }
+  function toggleRack() {
+    setTourIndex(null);
+    setCameraPreset('gpu');
+    setRackOpen(!rackOpen);
+    setSelectedGPU(null);
+    setSelectedComponent(null);
+  }
+
   const handleToggleOption = (key: keyof DisplayOptions) => {
     setDisplayOptions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
@@ -172,6 +190,14 @@ export const DigitalTwinPage: React.FC<Props> = ({
         <button className="btn-primary" onClick={() => setTourIndex(stage ? null : 0)}>{stage ? 'End presentation' : 'Start guided presentation'}</button>
         {([['energy','Energy flow'],['transparentPipes','Transparent pipes'],['exploded','Exploded assemblies'],['plates','Exchanger plates']] as const).map(([key,label]) =>
           <label key={key} className="flex items-center gap-1"><input type="checkbox" checked={displayOptions[key]} onChange={() => handleToggleOption(key)}/>{label}</label>)}
+      </div>
+      <div className="flex flex-wrap items-center gap-3 border-t px-4 py-2 text-xs">
+        <button className="btn-secondary" aria-expanded={rackOpen} onClick={toggleRack}>{rackOpen ? 'Close rack' : 'Open rack'}</button>
+        {rackOpen && <label>Inspect GPU <select className="field-input ml-2" value={inspected?.gpu_id ?? ''} onChange={e=>e.target.value ? inspectGPU(e.target.value) : setSelectedGPU(null)}>
+          <option value="">Stow trays</option>
+          {activeStep?.gpu_states.map((g,i)=><option key={g.gpu_id} value={g.gpu_id}>Tray {Math.floor(i/2)+1} · {g.gpu_id}</option>)}
+        </select></label>}
+        {rackOpen && inspected && <span className="font-mono">{inspected.current_temp_c.toFixed(1)} °C · {inspected.power_w.toFixed(0)} W electrical · {inspected.heat_to_coolant_w.toFixed(1)} W to coolant</span>}
       </div>
       {stage && <p aria-live="polite" className="border-t bg-cyan-50 px-4 py-3 text-sm"><strong>{(tourIndex ?? 0)+1} / {tour.length}</strong> · {stage.caption}</p>}
       {health.length > 0 && <div className="flex flex-wrap items-center gap-2 border-t p-3 text-xs"><strong>Simulated operating states</strong>{health.map(([name,state,reason]) =>
@@ -205,6 +231,8 @@ export const DigitalTwinPage: React.FC<Props> = ({
         <DigitalTwinScene
           telemetry={telemetryState}
           hasData={!!activeStep}
+          stepGPUs={activeStep?.gpu_states} rackOpen={rackOpen} selectedGPU={inspected?.gpu_id ?? null}
+          onToggleRack={toggleRack} onInspectGPU={inspectGPU}
           gpuConfigs={configs}
           selectedComponent={selectedComponent}
           onSelectComponent={setSelectedComponent}

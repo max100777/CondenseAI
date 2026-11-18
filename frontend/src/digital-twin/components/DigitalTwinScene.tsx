@@ -14,6 +14,11 @@ import { AGMDModule3D } from './AGMDModule3D';
 import { FreshwaterCollector3D } from './FreshwaterCollector3D';
 
 interface Props {
+  rackOpen: boolean;
+  selectedGPU: string | null;
+  onInspectGPU: (id:string) => void;
+  onToggleRack: () => void;
+  stepGPUs?: GPUState[];
   hasData: boolean;
   telemetry: TelemetryState;
   gpuConfigs: GPUConfig[];
@@ -76,7 +81,7 @@ const CameraController: React.FC<{
 };
 
 export const DigitalTwinScene: React.FC<Props> = ({
-  telemetry, hasData,
+  telemetry, hasData, rackOpen, selectedGPU, onInspectGPU, onToggleRack, stepGPUs,
   gpuConfigs,
   selectedComponent,
   onSelectComponent,
@@ -87,7 +92,7 @@ export const DigitalTwinScene: React.FC<Props> = ({
 
   // Map configs and current temperatures to GPUState list
   const gpuStates: GPUState[] = useMemo(() => {
-    return gpuConfigs.map((cfg, idx) => {
+    return stepGPUs ?? gpuConfigs.map((cfg, idx) => {
       const temp = telemetry.gpuTemperatures[idx] ?? 50.0;
       return {
         gpu_id: cfg.gpu_id,
@@ -100,7 +105,7 @@ export const DigitalTwinScene: React.FC<Props> = ({
         status: temp >= 80 ? 'warning' : 'nominal',
       };
     });
-  }, [gpuConfigs, telemetry.gpuTemperatures, telemetry.gpuHeatToCoolantW]);
+  }, [stepGPUs, gpuConfigs, telemetry.gpuTemperatures, telemetry.gpuHeatToCoolantW]);
 
   return (
     <div className="w-full h-full relative bg-slate-950 overflow-hidden select-none">
@@ -155,8 +160,8 @@ export const DigitalTwinScene: React.FC<Props> = ({
         {/* 1. GPU Cluster Chassis & Cold Plates */}
         <GPUCluster3D
           gpuStates={gpuStates}
-          selectedId={selectedComponent === 'gpu' ? (gpuStates[0]?.gpu_id || 'GPU-1') : null}
-          onSelectGPU={() => onSelectComponent('gpu')}
+          selectedId={selectedGPU} open={rackOpen} onOpen={onToggleRack}
+          onSelectGPU={onInspectGPU}
           showLabels={displayOptions.showLabels}
           showHeatmap={displayOptions.showHeatmap}
         />

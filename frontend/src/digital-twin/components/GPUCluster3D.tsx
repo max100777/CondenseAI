@@ -1,83 +1,58 @@
-import React from 'react';
-import { Html } from '@react-three/drei';
+import { useRef } from 'react';
+import { Clone, Html, useGLTF } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { Group, MathUtils, Object3D } from 'three';
 import { GPUState } from '../../types';
 import { GPUUnit3D } from './GPUUnit3D';
 import { SPATIAL_LAYOUT } from '../utils/spatialLayout';
 
 interface Props {
   gpuStates: GPUState[];
+  open: boolean;
   selectedId: string | null;
   onSelectGPU: (id: string) => void;
+  onOpen: () => void;
   showLabels: boolean;
   showHeatmap: boolean;
 }
 
-export const GPUCluster3D: React.FC<Props> = ({
-  gpuStates,
-  selectedId,
-  onSelectGPU,
-  showLabels,
-  showHeatmap,
-}) => {
-  const clusterPos = SPATIAL_LAYOUT.gpuCluster.position;
-  const n = Math.max(1, gpuStates.length);
-
-  // Compute vertical spacing based on GPU count
-  const spacingY = n <= 2 ? 0.9 : 0.6;
-  const startY = ((n - 1) * spacingY) / 2;
-
-  return (
-    <group position={clusterPos}>
-      {/* Server Rack / Chassis Frame */}
-      <mesh position={[0, 0, -0.45]} receiveShadow>
-        <boxGeometry args={[2.0, Math.max(2.4, n * spacingY + 0.8), 0.2]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.3} />
-      </mesh>
-
-      {/* Rack Corner Pillars */}
-      {[-0.95, 0.95].map((x) =>
-        [-0.45, 0.45].map((z) => (
-          <mesh key={`${x}-${z}`} position={[x, 0, z]}>
-            <boxGeometry args={[0.08, Math.max(2.4, n * spacingY + 0.8), 0.08]} />
-            <meshStandardMaterial color="#334155" metalness={0.95} roughness={0.2} />
-          </mesh>
-        ))
-      )}
-
-      {/* Main Coolant Distribution Manifold Headers */}
-      <mesh position={[-0.7, 0, 0.45]}>
-        <cylinderGeometry args={[0.06, 0.06, Math.max(2.2, n * spacingY + 0.6), 16]} />
-        <meshStandardMaterial color="#38bdf8" metalness={0.8} roughness={0.3} />
-      </mesh>
-      <mesh position={[0.7, 0, 0.45]}>
-        <cylinderGeometry args={[0.06, 0.06, Math.max(2.2, n * spacingY + 0.6), 16]} />
-        <meshStandardMaterial color="#f43f5e" metalness={0.8} roughness={0.3} />
-      </mesh>
-
-      {/* GPU Units */}
-      {gpuStates.map((gpu, idx) => {
-        const posY = startY - idx * spacingY;
-        return (
-          <GPUUnit3D
-            key={gpu.gpu_id}
-            gpu={gpu}
-            position={[0, posY, 0]}
-            isSelected={selectedId === gpu.gpu_id}
-            onSelect={onSelectGPU}
-            showLabels={showLabels}
-            showHeatmap={showHeatmap}
-          />
-        );
-      })}
-
-      {/* Rack Header Label */}
-      {showLabels && (
-        <Html position={[0, Math.max(1.4, (n * spacingY) / 2 + 0.6), 0]} center distanceFactor={14}>
-          <div className="bg-indigo-950/90 text-indigo-200 border border-indigo-700/80 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap shadow-lg">
-            AI GPU Cluster ({gpuStates.length} Nodes)
-          </div>
-        </Html>
-      )}
+function Tray({model, y, gpus, extended, selectedId, onSelectGPU, showLabels, showHeatmap}:
+  Pick<Props,'selectedId'|'onSelectGPU'|'showLabels'|'showHeatmap'> & {
+    model: Object3D; y: number; gpus: GPUState[]; extended: boolean;
+  }) {
+  const slide = useRef<Group>(null);
+  useFrame((_,dt) => {
+    if (slide.current) slide.current.position.z = MathUtils.damp(slide.current.position.z, extended ? 1.18 : 0, 9, dt);
+  });
+  return <group position={[0,y,0]}>
+    <group ref={slide}>
+      <Clone object={model} onClick={event => {event.stopPropagation(); onSelectGPU(gpus[0].gpu_id);}} />
+      {gpus.map((gpu,i) => <group key={gpu.gpu_id} position={[i === 0 ? -.44 : .44,.16,0]} scale={.49}>
+        <GPUUnit3D position={[0,0,0]} gpu={gpu} isSelected={selectedId===gpu.gpu_id}
+          onSelect={onSelectGPU} showLabels={showLabels} showHeatmap={showHeatmap}/>
+      </group>)}
     </group>
-  );
-};
+  </group>;
+}
+
+export function GPUCluster3D({gpuStates, open, onOpen, ...selection}: Props) {
+  const {nodes} = useGLTF('/models/liquid-cooled-rack.glb');
+  const hinge = useRef<Group>(null);
+  useFrame((_,dt) => {
+    if (hinge.current) hinge.current.rotation.y = MathUtils.damp(hinge.current.rotation.y, open ? -1.85 : 0, 8, dt);
+  });
+  return <group position={SPATIAL_LAYOUT.gpuCluster.position}>
+    <Clone object={nodes.Cabinet}/>
+    {Array.from({length: Math.ceil(gpuStates.length/2)}, (_,i) => {
+      const pair = gpuStates.slice(2*i,2*i+2);
+      return <Tray key={i} model={nodes.Tray} y={1.28-i*.62} gpus={pair}
+        extended={open && pair.some(g=>g.gpu_id===selection.selectedId)} {...selection}/>;
+    })}
+    <group ref={hinge} position={[-.98,0,.76]} onClick={e=>{e.stopPropagation(); onOpen();}}>
+      <Clone object={nodes.Door}/>
+    </group>
+    {selection.showLabels && <Html center position={[0,2.2,0]} style={{pointerEvents:'none'}}>
+      <span className="whitespace-nowrap rounded bg-slate-950 px-2 py-1 text-xs text-white">Liquid-cooled GPU rack</span>
+    </Html>}
+  </group>;
+}
