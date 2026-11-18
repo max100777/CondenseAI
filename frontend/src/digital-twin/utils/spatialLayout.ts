@@ -41,12 +41,13 @@ export const SPATIAL_LAYOUT = {
 };
 
 export const CAMERA_PRESETS: Record<CameraPreset, { position: [number, number, number]; target: [number, number, number] }> = {
+  collector: { position: [5.8, -0.4, 3], target: [5.2, -1.5, 0] },
   overview: {
     position: [0.0, 3.5, 11.5],
     target: [0.0, 0.0, 0.0],
   },
   gpu: {
-    position: [-5.0, 1.5, 4.0],
+    position: [-3.8, 1.6, 5.0],
     target: [-5.0, 0.0, 0.0],
   },
   hx: {

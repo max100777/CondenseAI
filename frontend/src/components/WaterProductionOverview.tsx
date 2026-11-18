@@ -19,82 +19,82 @@ export const WaterProductionOverview: React.FC<Props> = ({ analytics, totalFresh
   const recoveryPct = analytics?.water_recovery_percent;
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl backdrop-blur">
+    <section className="panel">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-cyan-500/10 text-cyan-400 rounded-lg">
+          <div className="rounded-lg bg-cyan-50 p-2 text-cyan-800">
             <Droplet className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-100">Water Production Overview</h2>
-            <p className="text-xs text-slate-400">Air-Gap Membrane Distillation (AGMD) Yield & Permeate Performance</p>
+            <h2 className="panel-heading">Water production</h2>
+            <p className="panel-subtitle">AGMD distillate yield and membrane performance indicators.</p>
           </div>
         </div>
-        <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800/60">
-          Module 5 Analytics
+        <span className="status-badge border-cyan-200 bg-cyan-50 text-cyan-800">
+          Analytics output
         </span>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Total Freshwater */}
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4">
-          <div className="text-xs text-slate-400 font-medium">Total Freshwater Produced</div>
-          <div className="text-2xl font-bold text-cyan-300 mt-1">
+        <div className="metric-card">
+          <div className="field-label">Total freshwater produced</div>
+          <div className="mt-1 text-2xl font-bold text-cyan-800">
             {totalL >= 1.0
               ? `${totalL.toFixed(3)} L`
               : totalL >= 0.001
               ? `${totalML.toFixed(2)} mL`
               : `${(totalL * 1e6).toFixed(1)} µL`}
           </div>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="mt-1 text-xs text-slate-500">
             {totalL >= 0.001 ? `${totalML.toFixed(2)} mL pure distillate` : `${(totalL * 1e6).toFixed(1)} µL (${totalML.toFixed(3)} mL)`}
           </div>
         </div>
 
         {/* Production Rates */}
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4">
-          <div className="text-xs text-slate-400 font-medium">Production Rate (L/h)</div>
-          <div className="text-2xl font-bold text-emerald-400 mt-1">
-            {currentRate.toFixed(4)} <span className="text-sm font-normal text-slate-400">L/h</span>
+        <div className="metric-card">
+          <div className="field-label">Production rate</div>
+          <div className="mt-1 text-2xl font-bold text-emerald-700">
+            {currentRate.toFixed(4)} <span className="text-sm font-normal text-slate-500">L/h</span>
           </div>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="mt-1 text-xs text-slate-500">
             Avg: {avgRate.toFixed(4)} L/h
           </div>
         </div>
 
         {/* Membrane Flux */}
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4">
-          <div className="text-xs text-slate-400 font-medium flex items-center justify-between">
+        <div className="metric-card">
+          <div className="field-label flex items-center justify-between">
             <span>Membrane Flux</span>
-            <Gauge className="w-3.5 h-3.5 text-slate-500" />
+            <Gauge className="h-3.5 w-3.5 text-slate-400" />
           </div>
-          <div className="text-2xl font-bold text-teal-300 mt-1">
-            {avgFlux.toFixed(2)} <span className="text-sm font-normal text-slate-400">LMH</span>
+          <div className="mt-1 text-2xl font-bold text-teal-700">
+            {avgFlux.toFixed(2)} <span className="text-sm font-normal text-slate-500">LMH</span>
           </div>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="mt-1 text-xs text-slate-500">
             Peak: {maxFlux.toFixed(2)} LMH (time-weighted)
           </div>
         </div>
 
         {/* AGMD Energy & Recovery */}
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4">
-          <div className="text-xs text-slate-400 font-medium flex items-center justify-between">
+        <div className="metric-card">
+          <div className="field-label flex items-center justify-between">
             <span>Thermal Energy & Recovery</span>
             <Flame className="w-3.5 h-3.5 text-amber-500" />
           </div>
-          <div className="text-2xl font-bold text-amber-300 mt-1">
-            {agmdEnergyKwh.toFixed(4)} <span className="text-sm font-normal text-slate-400">kWh<sub className="text-[10px]">th</sub></span>
+          <div className="mt-1 text-2xl font-bold text-amber-700">
+            {agmdEnergyKwh.toFixed(4)} <span className="text-sm font-normal text-slate-500">kWh<sub className="text-[10px]">th</sub></span>
           </div>
-          <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
+          <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
             <span>{(agmdEnergyJ / 1e3).toFixed(1)} kJ</span>
             {recoveryPct !== null && recoveryPct !== undefined && (
-              <span className="text-cyan-400 font-medium flex items-center gap-0.5">
+              <span className="flex items-center gap-0.5 font-medium text-cyan-800">
                 <Percent className="w-2.5 h-2.5" /> {recoveryPct.toFixed(3)}% rec
               </span>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

@@ -1,11 +1,13 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { ComponentType, CameraPreset, DisplayOptions, TelemetryState } from '../types';
 import { GPUConfig, GPUState } from '../../types';
 import { CAMERA_PRESETS } from '../utils/spatialLayout';
+import { acceleratorSlot, serviceExtension } from '../utils/acceleratorLayout';
 import { GPUCluster3D } from './GPUCluster3D';
+import { PlantStage } from './PlantStage';
 import { PrimaryCoolantLoop3D } from './PrimaryCoolantLoop3D';
 import { HeatExchanger3D } from './HeatExchanger3D';
 import { SecondaryWaterLoop3D } from './SecondaryWaterLoop3D';
@@ -14,6 +16,12 @@ import { AGMDModule3D } from './AGMDModule3D';
 import { FreshwaterCollector3D } from './FreshwaterCollector3D';
 
 interface Props {
+  rackOpen: boolean;
+  selectedGPU: string | null;
+  onInspectGPU: (id:string) => void;
+  onToggleRack: () => void;
+  stepGPUs?: GPUState[];
+  hasData: boolean;
   telemetry: TelemetryState;
   gpuConfigs: GPUConfig[];
   selectedComponent: ComponentType | null;
@@ -22,12 +30,26 @@ interface Props {
   displayOptions: DisplayOptions;
 }
 
+type Point = [number, number, number];
+function Flow({from, to, color}: {from: Point; to: Point; color: string}) {
+  const marker = useRef<THREE.Mesh>(null);
+  useFrame(({clock}) => {
+    const t = (clock.elapsedTime * .7) % 1;
+    marker.current?.position.set(from[0]+(to[0]-from[0])*t, from[1]+(to[1]-from[1])*t, from[2]+(to[2]-from[2])*t);
+  });
+  return <mesh ref={marker} rotation={[0,0,Math.atan2(to[1]-from[1],to[0]-from[0])-Math.PI/2]}>
+    <coneGeometry args={[.105,.24,12]} /><meshBasicMaterial color={color}/>
+  </mesh>;
+}
+
 // Camera transition controller
 const CameraController: React.FC<{
+  gpuIndex: number;
   cameraPreset: CameraPreset;
   controlsRef: React.RefObject<any>;
-}> = ({ cameraPreset, controlsRef }) => {
-  const { camera } = useThree();
+}> = ({ cameraPreset, controlsRef, gpuIndex }) => {
+  const { camera, size } = useThree();
+  const transitioning = useRef(true);
   const targetConfig = CAMERA_PRESETS[cameraPreset];
   const targetPos = useRef(new THREE.Vector3(...targetConfig.position));
   const targetLook = useRef(new THREE.Vector3(...targetConfig.target));
@@ -36,14 +58,32 @@ const CameraController: React.FC<{
     const cfg = CAMERA_PRESETS[cameraPreset];
     targetPos.current.set(...cfg.position);
     targetLook.current.set(...cfg.target);
-  }, [cameraPreset]);
+    if (cameraPreset === 'gpu' && gpuIndex >= 0) {
+      const slot = acceleratorSlot(gpuIndex);
+      targetLook.current.set(-5 + slot.x, slot.trayY+.15, serviceExtension+slot.z);
+      targetPos.current.copy(targetLook.current).add(new THREE.Vector3(.55, 1.05, .92));
+    }
+    if (cameraPreset === 'overview' && camera instanceof THREE.PerspectiveCamera) {
+      const verticalHalfAngle = THREE.MathUtils.degToRad(camera.fov / 2);
+      const aspect = size.width / Math.max(1, size.height);
+      const distance = 8.2 / (Math.tan(verticalHalfAngle) * aspect);
+      targetPos.current.set(1.5, 3.6, Math.max(10.7, distance));
+    }
+    transitioning.current = true;
+    const controls = controlsRef.current;
+    const release = () => { transitioning.current = false; };
+    controls?.addEventListener('start', release);
+    return () => controls?.removeEventListener('start', release);
+  }, [cameraPreset, size.width, size.height, camera, controlsRef, gpuIndex]);
 
   useFrame(() => {
+    if (!transitioning.current) return;
     // Smooth lerp towards preset camera target
     camera.position.lerp(targetPos.current, 0.06);
     if (controlsRef.current) {
       controlsRef.current.target.lerp(targetLook.current, 0.06);
       controlsRef.current.update();
+      if (camera.position.distanceToSquared(targetPos.current) < 0.00001) transitioning.current = false;
     }
   });
 
@@ -51,7 +91,7 @@ const CameraController: React.FC<{
 };
 
 export const DigitalTwinScene: React.FC<Props> = ({
-  telemetry,
+  telemetry, hasData, rackOpen, selectedGPU, onInspectGPU, onToggleRack, stepGPUs,
   gpuConfigs,
   selectedComponent,
   onSelectComponent,
@@ -62,7 +102,7 @@ export const DigitalTwinScene: React.FC<Props> = ({
 
   // Map configs and current temperatures to GPUState list
   const gpuStates: GPUState[] = useMemo(() => {
-    return gpuConfigs.map((cfg, idx) => {
+    return stepGPUs ?? gpuConfigs.map((cfg, idx) => {
       const temp = telemetry.gpuTemperatures[idx] ?? 50.0;
       return {
         gpu_id: cfg.gpu_id,
@@ -75,49 +115,56 @@ export const DigitalTwinScene: React.FC<Props> = ({
         status: temp >= 80 ? 'warning' : 'nominal',
       };
     });
-  }, [gpuConfigs, telemetry.gpuTemperatures, telemetry.gpuHeatToCoolantW]);
+  }, [stepGPUs, gpuConfigs, telemetry.gpuTemperatures, telemetry.gpuHeatToCoolantW]);
 
   return (
     <div className="w-full h-full relative bg-slate-950 overflow-hidden select-none">
       <Canvas
         camera={{ position: [0.0, 3.5, 11.5], fov: 45 }}
         onPointerMissed={() => onSelectComponent(null)}
+        shadows
+        dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: false }}
       >
-        <color attach="background" args={['#030712']} />
-        <fog attach="fog" args={['#030712', 15, 30]} />
-
-        {/* Ambient & Directional Lighting */}
-        <ambientLight intensity={0.65} />
-        <directionalLight position={[6, 10, 8]} intensity={1.2} castShadow />
-        <directionalLight position={[-8, 6, -4]} intensity={0.5} />
-        <pointLight position={[-1.4, 2, 2]} intensity={0.4} color="#38bdf8" />
-        <pointLight position={[5.2, 2, 2]} intensity={0.4} color="#06b6d4" />
-
-        {/* Studio Floor Grid */}
-        <gridHelper args={[30, 30, '#1e293b', '#0f172a']} position={[0, -2.1, 0]} />
+        <PlantStage />
 
         {/* Camera Controller & OrbitControls */}
-        <CameraController cameraPreset={cameraPreset} controlsRef={controlsRef} />
+        <CameraController cameraPreset={cameraPreset} controlsRef={controlsRef} gpuIndex={gpuStates.findIndex(gpu => gpu.gpu_id === selectedGPU)} />
         <OrbitControls
           ref={controlsRef}
           enableDamping
-          minDistance={2.5}
-          maxDistance={22}
+          minDistance={.8}
+          maxDistance={50}
           maxPolarAngle={Math.PI / 2 + 0.02}
         />
 
+        {hasData && displayOptions.flowAnimation && <>
+          <Flow from={[-4.2,.7,.2]} to={[-2,.7,.2]} color="#ffb897" />
+          <Flow from={[-2,-.7,.2]} to={[-4.2,-.7,.2]} color="#7dd3fc" />
+          <Flow from={[-.8,.7,-.2]} to={[.9,.7,-.2]} color="#ffd580" />
+          <Flow from={[.9,-.7,-.2]} to={[-.8,-.7,-.2]} color="#67e8ad" />
+          <Flow from={[2.7,.4,0]} to={[4.4,.4,0]} color="#ffd580" />
+          {telemetry.freshwaterRateLh > 0 && <Flow from={[5.25,-.55,0]} to={[5.2,-1.2,0]} color="#93edff" />}
+        </>}
+        {hasData && displayOptions.energy && [
+          [-3.1, 'GPU → coolant', telemetry.gpuHeatToCoolantW],
+          [-1.4, 'Coolant → exchanger', telemetry.hxHeatTransferredW],
+          [.25, 'Exchanger → reservoir', telemetry.hxHeatTransferredW],
+          [3.55, 'Reservoir → AGMD', telemetry.agmdHeatExtractedW],
+        ].map(([x, label, watts], i) => <Html key={label} position={[Number(x), i % 2 ? -.35 : .95, .5]} center style={{pointerEvents:'none'}}>
+          <span className="block whitespace-nowrap rounded bg-slate-950/90 px-2 py-1 text-center text-[10px] text-white">{label}<br/>{Number(watts).toFixed(1)} W</span>
+        </Html>)}
         {/* 1. GPU Cluster Chassis & Cold Plates */}
         <GPUCluster3D
           gpuStates={gpuStates}
-          selectedId={selectedComponent === 'gpu' ? (gpuStates[0]?.gpu_id || 'GPU-1') : null}
-          onSelectGPU={() => onSelectComponent('gpu')}
+          selectedId={selectedGPU} open={rackOpen} onOpen={onToggleRack}
+          onSelectGPU={onInspectGPU}
           showLabels={displayOptions.showLabels}
           showHeatmap={displayOptions.showHeatmap}
         />
 
         {/* 2. Primary Coolant Loop */}
-        <PrimaryCoolantLoop3D
+        <PrimaryCoolantLoop3D transparent={displayOptions.transparentPipes}
           primaryTempC={telemetry.primaryOutletTempC}
           primaryOutletTempC={telemetry.primaryInletTempC}
           isSelected={selectedComponent === 'primary-loop' || selectedComponent === 'primary_loop'}
@@ -126,7 +173,7 @@ export const DigitalTwinScene: React.FC<Props> = ({
         />
 
         {/* 3. Counterflow Plate Heat Exchanger */}
-        <HeatExchanger3D
+        <HeatExchanger3D plates={displayOptions.plates} exploded={displayOptions.exploded}
           hxHeatTransferW={telemetry.hxHeatTransferredW}
           hxEffectiveness={telemetry.hxEffectiveness}
           primaryInletTempC={telemetry.primaryOutletTempC}
@@ -140,7 +187,7 @@ export const DigitalTwinScene: React.FC<Props> = ({
         />
 
         {/* 4. Secondary Water Loop */}
-        <SecondaryWaterLoop3D
+        <SecondaryWaterLoop3D transparent={displayOptions.transparentPipes}
           secondaryOutletTempC={telemetry.secondaryOutletTempC}
           reservoirTempC={telemetry.reservoirTempC}
           isSelected={selectedComponent === 'secondary-loop' || selectedComponent === 'secondary_loop'}

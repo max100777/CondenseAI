@@ -28,14 +28,21 @@ export const Reservoir3D: React.FC<Props> = ({
   return (
     <group position={resPos} onClick={(e) => { e.stopPropagation(); onSelect(); }}>
       {/* Insulated Outer Tank Base & Top Cap */}
-      <mesh position={[0, -1.05, 0]}>
+      <mesh position={[0, -1.05, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.95, 0.95, 0.1, 32]} />
         <meshStandardMaterial color="#334155" metalness={0.9} roughness={0.2} />
       </mesh>
-      <mesh position={[0, 1.05, 0]}>
+      <mesh position={[0, 1.05, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.95, 0.95, 0.1, 32]} />
         <meshStandardMaterial color="#334155" metalness={0.9} roughness={0.2} />
       </mesh>
+      {[0, 1, 2, 3].map(index => {
+        const angle = Math.PI / 4 + index * Math.PI / 2;
+        return <mesh key={index} position={[Math.cos(angle)*.9,0,Math.sin(angle)*.9]} castShadow>
+          <cylinderGeometry args={[.032,.032,2.04,12]} />
+          <meshStandardMaterial color="#91a3ad" metalness={.72} roughness={.39} />
+        </mesh>;
+      })}
 
       {/* Transparent Glass Vessel Wall */}
       <mesh>

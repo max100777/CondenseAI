@@ -51,9 +51,9 @@ export const DigitalTwinControls: React.FC<Props> = ({
   ];
 
   return (
-    <div className="absolute top-4 left-4 z-10 flex flex-col gap-3 pointer-events-auto max-w-md">
+    <div className="flex flex-wrap items-start gap-2 border-t border-slate-700 bg-slate-900 p-3 text-white">
       {/* 1. Camera Viewpoints Bar */}
-      <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl p-1.5 flex items-center gap-1 shadow-xl">
+      <div className="flex flex-wrap items-center gap-1 rounded-lg border border-slate-700 p-1.5">
         <span className="text-[11px] font-semibold text-slate-400 px-2 flex items-center gap-1">
           <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
           Views:

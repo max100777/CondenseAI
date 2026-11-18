@@ -22,8 +22,8 @@ export const TimeSeriesCharts: React.FC<Props> = ({ timeSeries }) => {
 
   if (!timeSeries || timeSeries.length === 0) {
     return (
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-8 text-center text-slate-500">
-        No simulation data available. Configure GPUs and click "Run Multi-GPU Simulation".
+      <div className="panel text-center text-slate-500">
+        No simulation data is available. Configure the cluster and run the simulation.
       </div>
     );
   }
@@ -54,21 +54,21 @@ export const TimeSeriesCharts: React.FC<Props> = ({ timeSeries }) => {
   const gpuColors = ['#f43f5e', '#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'];
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl backdrop-blur">
+    <section className="panel">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-slate-100">Dynamic Transient Time-Series</h2>
-          <p className="text-xs text-slate-400">Recharts Physics Traces across All Circuits</p>
+          <h2 className="panel-heading">Transient simulation results</h2>
+          <p className="panel-subtitle">Time-resolved thermal, water-production, and heat-transfer traces.</p>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex flex-wrap gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs">
           <button
             onClick={() => setActiveTab('production')}
             className={`px-3 py-1.5 rounded-md font-medium transition ${
               activeTab === 'production'
-                ? 'bg-cyan-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-cyan-800 text-white shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-slate-800'
             }`}
           >
             Water Production
@@ -77,8 +77,8 @@ export const TimeSeriesCharts: React.FC<Props> = ({ timeSeries }) => {
             onClick={() => setActiveTab('temperatures')}
             className={`px-3 py-1.5 rounded-md font-medium transition ${
               activeTab === 'temperatures'
-                ? 'bg-cyan-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-cyan-800 text-white shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-slate-800'
             }`}
           >
             Temperatures (All GPUs & Loops)
@@ -87,8 +87,8 @@ export const TimeSeriesCharts: React.FC<Props> = ({ timeSeries }) => {
             onClick={() => setActiveTab('heat_flow')}
             className={`px-3 py-1.5 rounded-md font-medium transition ${
               activeTab === 'heat_flow'
-                ? 'bg-cyan-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-cyan-800 text-white shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-slate-800'
             }`}
           >
             Heat Transfer & Recovery
@@ -97,8 +97,8 @@ export const TimeSeriesCharts: React.FC<Props> = ({ timeSeries }) => {
             onClick={() => setActiveTab('thermal')}
             className={`px-3 py-1.5 rounded-md font-medium transition ${
               activeTab === 'thermal'
-                ? 'bg-cyan-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-cyan-800 text-white shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-slate-800'
             }`}
           >
             AGMD Extraction Rate
@@ -195,6 +195,6 @@ export const TimeSeriesCharts: React.FC<Props> = ({ timeSeries }) => {
           </ResponsiveContainer>
         )}
       </div>
-    </div>
+    </section>
   );
 };

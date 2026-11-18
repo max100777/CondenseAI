@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { slotsPerTray } from './utils/acceleratorLayout';
 import { MultiGPUSimulationResponse, GPUConfig } from '../types';
 import { CameraPreset, DisplayOptions, ComponentType } from './types';
 import { useDigitalTwinData } from './hooks/useDigitalTwinData';
@@ -7,6 +8,21 @@ import { DigitalTwinControls } from './components/DigitalTwinControls';
 import { DigitalTwinLegend } from './components/DigitalTwinLegend';
 import { ComponentInfoPanel } from './components/ComponentInfoPanel';
 import { Play, Sparkles } from 'lucide-react';
+
+const tour: {camera: CameraPreset; caption: string}[] = [
+  {camera:'overview', caption:'Follow the two isolated fluid circuits from the GPU rack to the distillate collector.'},
+  {camera:'gpu', caption:'Electrical power heats each GPU. Its cold plate transfers part of that heat into the circulating primary coolant.'},
+  {camera:'hx', caption:'Heat crosses the exchanger plates into the saline loop. The primary coolant returns to the rack.'},
+  {camera:'reservoir', caption:'The reservoir stores recovered heat and supplies warm saline feed to the membrane module.'},
+  {camera:'agmd', caption:'Water evaporates at the warm membrane, crosses the air gap as vapor and condenses on the cold surface.'},
+  {camera:'collector', caption:'Condensate drains into the collector. Its simulated volume accumulates over the run.'},
+];
+
+function grade(value: number, caution: number, critical: number) {
+  if (value <= critical) return 'Critical';
+  if (value <= caution) return 'Caution';
+  return 'Normal';
+}
 
 interface Props {
   simulationResult: MultiGPUSimulationResponse | null;
@@ -27,12 +43,13 @@ export const DigitalTwinPage: React.FC<Props> = ({
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('overview');
   const [selectedComponent, setSelectedComponent] = useState<ComponentType | null>(null);
 
-  // Fix 4: Thermal heatmap shader enabled by default for immediate physical feedback
+  // Start with equipment materials visible. Heatmap is available in the viewport controls.
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
-    showLabels: true,
-    showHeatmap: true,
+    showLabels: false,
+    showHeatmap: false,
     flowAnimation: true,
     agmdCutaway: false,
+    transparentPipes: false, exploded: false, plates: false, energy: false,
   });
 
   const timeSeries = simulationResult?.time_series || [];
@@ -44,7 +61,28 @@ export const DigitalTwinPage: React.FC<Props> = ({
     activeStepIndex
   );
 
+  const [rackOpen, setRackOpen] = useState(false);
+  const [selectedGPU, setSelectedGPU] = useState<string | null>(null);
+  const inspected = activeStep?.gpu_states.find(gpu => gpu.gpu_id === selectedGPU);
   const currentTime = activeStep ? activeStep.time_s : 0;
+  const [tourIndex, setTourIndex] = useState<number | null>(null);
+  const stage = tourIndex === null ? null : tour[tourIndex];
+  useEffect(() => {
+    if (tourIndex === null) return;
+    const timer = window.setTimeout(() => setTourIndex(tourIndex + 1 < tour.length ? tourIndex + 1 : null), 8500);
+    return () => window.clearTimeout(timer);
+  }, [tourIndex]);
+  const params = simulationResult?.parameters;
+  const configs: GPUConfig[] = params?.gpus ?? gpuConfigs;
+  const health = activeStep ? [
+    ...activeStep.gpu_states.map(g => {
+      const limit = configs.find(c => c.gpu_id === g.gpu_id)?.max_temp_c ?? 90;
+      return [g.gpu_id, grade(limit - g.current_temp_c, 5, 0), 'Temperature limit ' + limit + ' °C, caution within 5 °C'];
+    }),
+    ['Exchanger', grade(activeStep.hx_effectiveness, .5, .2), 'Effectiveness thresholds 0.50 and 0.20'],
+    ['Reservoir', grade(activeStep.secondary_reservoir_temp_c - (params?.min_secondary_temp_c ?? 20), 3, 0), 'Caution within 3 °C of the minimum, critical at or below it'],
+    ['AGMD', !params?.enable_agmd ? 'Off' : grade(activeStep.heat_to_agmd_w / (activeStep.heat_to_agmd_w + activeStep.unmet_agmd_demand_w || 1), .95, .1), 'Fraction of thermal demand supplied, thresholds 95% and 10%'],
+  ] : [];
 
   // Fix 2: When a fresh simulation result arrives, reset to start and automatically begin playback
   useEffect(() => {
@@ -124,21 +162,49 @@ export const DigitalTwinPage: React.FC<Props> = ({
     }
   };
 
+  function inspectGPU(id: string) {
+    setTourIndex(null);
+    setCameraPreset('gpu');
+    setSelectedComponent(null);
+    setRackOpen(true);
+    setSelectedGPU(id);
+  }
+  function toggleRack() {
+    setTourIndex(null);
+    setCameraPreset('gpu');
+    setRackOpen(!rackOpen);
+    setSelectedGPU(rackOpen ? null : activeStep?.gpu_states[0]?.gpu_id ?? null);
+    setSelectedComponent(null);
+  }
+
   const handleToggleOption = (key: keyof DisplayOptions) => {
     setDisplayOptions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-4.5rem)] min-h-[640px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col">
-      {/* Top Banner / System Breadcrumbs */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none hidden md:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-700/60 shadow-lg text-xs text-slate-300">
-        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-        <span className="font-semibold text-white">CondensAI 3D Digital Twin</span>
-        <span className="text-slate-500">|</span>
-        <span className="font-mono text-cyan-300">
-          GPU Waste Heat → Counterflow HX → Thermal Reservoir → AGMD Distillation
-        </span>
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <header className="border-b border-slate-200 px-5 py-4">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900">Heat recovery and desalination</h2>
+        <p className="mt-1 text-sm text-slate-600">Select a component to inspect its simulated operating conditions.</p>
+      </header>
+      <div className="flex flex-wrap items-center gap-3 p-4 text-xs">
+        <button className="btn-primary" onClick={() => setTourIndex(stage ? null : 0)}>{stage ? 'End presentation' : 'Start guided presentation'}</button>
+        {([['energy','Energy flow'],['transparentPipes','Transparent pipes'],['exploded','Exploded assemblies'],['plates','Exchanger plates']] as const).map(([key,label]) =>
+          <label key={key} className="flex items-center gap-1"><input type="checkbox" checked={displayOptions[key]} onChange={() => handleToggleOption(key)}/>{label}</label>)}
       </div>
+      <div className="flex flex-wrap items-center gap-3 border-t px-4 py-2 text-xs">
+        <button className="btn-secondary" aria-expanded={rackOpen} onClick={toggleRack}>{rackOpen ? 'Close rack' : 'Open rack'}</button>
+        {rackOpen && <label>Inspect GPU <select className="field-input ml-2" value={inspected?.gpu_id ?? ''} onChange={e=>e.target.value ? inspectGPU(e.target.value) : setSelectedGPU(null)}>
+          <option value="">Stow trays</option>
+          {activeStep?.gpu_states.map((g,i)=><option key={g.gpu_id} value={g.gpu_id}>Tray {Math.floor(i/slotsPerTray)+1} · Slot {i % slotsPerTray + 1} · {g.gpu_id}</option>)}
+        </select></label>}
+        {rackOpen && inspected && <span className="font-mono">{inspected.current_temp_c.toFixed(1)} °C · {inspected.power_w.toFixed(0)} W electrical · {inspected.heat_to_coolant_w.toFixed(1)} W to coolant</span>}
+        {rackOpen && <a href="https://www.amd.com/en/products/accelerators/instinct/mi300/platform.html" target="_blank" rel="noreferrer" className="text-slate-600 underline">Eight-slot OAM baseboard · hardware reference</a>}
+      </div>
+      {stage && <p aria-live="polite" className="border-t bg-cyan-50 px-4 py-3 text-sm"><strong>{(tourIndex ?? 0)+1} / {tour.length}</strong> · {stage.caption}</p>}
+      {health.length > 0 && <div className="flex flex-wrap items-center gap-2 border-t p-3 text-xs"><strong>Simulated operating states</strong>{health.map(([name,state,reason]) =>
+        <span key={name} title={reason} className={'rounded px-2 py-1 '+({Normal:'bg-emerald-100', Caution:'bg-amber-100', Critical:'bg-rose-200', Off:'bg-slate-100'}[state])}>{name} · {state}</span>)}</div>}
+    <div className="relative isolate bg-slate-950">
 
       {/* Empty State Banner (Prompt to Run Simulation) */}
       {!simulationResult && (
@@ -163,32 +229,21 @@ export const DigitalTwinPage: React.FC<Props> = ({
       )}
 
       {/* 3D Scene Viewport */}
-      <div className="w-full h-full flex-1">
+      <div className="h-[clamp(360px,60vh,700px)] w-full">
         <DigitalTwinScene
           telemetry={telemetryState}
-          gpuConfigs={gpuConfigs}
+          hasData={!!activeStep}
+          stepGPUs={activeStep?.gpu_states} rackOpen={rackOpen} selectedGPU={inspected?.gpu_id ?? null}
+          onToggleRack={toggleRack} onInspectGPU={inspectGPU}
+          gpuConfigs={configs}
           selectedComponent={selectedComponent}
           onSelectComponent={setSelectedComponent}
-          cameraPreset={cameraPreset}
-          displayOptions={displayOptions}
+          cameraPreset={stage?.camera ?? cameraPreset}
+          displayOptions={stage ? {...displayOptions, plates: stage.camera === 'hx', agmdCutaway: stage.camera === 'agmd', flowAnimation:true} : displayOptions}
         />
       </div>
 
-      {/* UI Controls Overlay (Left) */}
-      <DigitalTwinControls
-        cameraPreset={cameraPreset}
-        onSelectCamera={setCameraPreset}
-        displayOptions={displayOptions}
-        onToggleOption={handleToggleOption}
-        currentTime={currentTime}
-        totalDuration={totalDuration}
-        onSeekTime={handleSeekTime}
-        isPlaying={isPlaying}
-        onTogglePlay={handleTogglePlay}
-        playbackSpeed={playbackSpeed}
-        onChangeSpeed={setPlaybackSpeed}
-        hasData={timeSeries.length > 0}
-      />
+
 
       {/* Scientific Legend & Fluid Isolation HUD (Bottom-Left) */}
       <DigitalTwinLegend />
@@ -200,5 +255,21 @@ export const DigitalTwinPage: React.FC<Props> = ({
         telemetry={telemetryState}
       />
     </div>
+      {/* UI Controls Overlay (Left) */}
+      <DigitalTwinControls
+        cameraPreset={stage?.camera ?? cameraPreset}
+        onSelectCamera={preset => {setTourIndex(null); setCameraPreset(preset);}}
+        displayOptions={displayOptions}
+        onToggleOption={handleToggleOption}
+        currentTime={currentTime}
+        totalDuration={totalDuration}
+        onSeekTime={handleSeekTime}
+        isPlaying={isPlaying}
+        onTogglePlay={handleTogglePlay}
+        playbackSpeed={playbackSpeed}
+        onChangeSpeed={setPlaybackSpeed}
+        hasData={timeSeries.length > 0}
+      />
+    </section>
   );
 };

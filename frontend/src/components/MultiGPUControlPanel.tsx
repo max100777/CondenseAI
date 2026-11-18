@@ -76,29 +76,29 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
   const totalPower = gpus.reduce((acc, g) => acc + (Number(g.power_w) || 0), 0);
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl backdrop-blur">
+    <section className="panel">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+          <div className="rounded-lg bg-cyan-50 p-2 text-cyan-800">
             <Cpu className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-100">Multi-GPU Scaling Control</h2>
-            <p className="text-xs text-slate-400">Heterogeneous AI Cluster Waste-Heat Configuration</p>
+            <h2 className="panel-heading">Simulation configuration</h2>
+            <p className="panel-subtitle">Configure the GPU cluster and numerical time domain for this analysis.</p>
           </div>
         </div>
 
         {/* Preset Buttons */}
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-400">Presets:</span>
-          {[1, 2, 4].map((n) => (
+          <span className="field-label">Cluster preset</span>
+          {[1, 2, 4, 8].map((n) => (
             <button
               key={n}
               onClick={() => setPresetCount(n)}
               className={`px-3 py-1 rounded-md font-medium border transition ${
                 gpus.length === n
-                  ? 'bg-indigo-600 border-indigo-500 text-white'
-                  : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700'
+                  ? 'border-cyan-800 bg-cyan-800 text-white'
+                  : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
               }`}
             >
               {n} {n === 1 ? 'GPU' : 'GPUs'}
@@ -112,14 +112,14 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
         {gpus.map((gpu, idx) => (
           <div
             key={gpu.gpu_id || idx}
-            className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-3.5 flex flex-wrap items-center justify-between gap-3"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3.5"
           >
             <div className="flex items-center gap-2 min-w-[100px]">
-              <span className="font-semibold text-indigo-300 text-sm">{gpu.gpu_id}</span>
+              <span className="text-sm font-semibold text-slate-800">{gpu.gpu_id}</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-400">Power (W):</label>
+              <label className="field-label">Power (W)</label>
               <input
                 type="number"
                 min="0"
@@ -127,12 +127,12 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
                 step="25"
                 value={gpu.power_w}
                 onChange={(e) => updateGpu(idx, 'power_w', parseFloat(e.target.value) || 0)}
-                className="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-right text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="field-input w-20"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-400">T_0 (°C):</label>
+              <label className="field-label">T₀ (°C)</label>
               <input
                 type="number"
                 min="0"
@@ -140,12 +140,12 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
                 step="1"
                 value={gpu.initial_temp_c}
                 onChange={(e) => updateGpu(idx, 'initial_temp_c', parseFloat(e.target.value) || 0)}
-                className="w-16 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-right text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="field-input w-16"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-400">R_th (K/W):</label>
+              <label className="field-label">Rth (K/W)</label>
               <input
                 type="number"
                 min="0.01"
@@ -153,12 +153,12 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
                 step="0.01"
                 value={gpu.thermal_resistance_k_per_w}
                 onChange={(e) => updateGpu(idx, 'thermal_resistance_k_per_w', parseFloat(e.target.value) || 0.12)}
-                className="w-16 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-right text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="field-input w-16"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-400">C_th (J/K):</label>
+              <label className="field-label">Cth (J/K)</label>
               <input
                 type="number"
                 min="50"
@@ -166,7 +166,7 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
                 step="25"
                 value={gpu.thermal_capacitance_j_per_k}
                 onChange={(e) => updateGpu(idx, 'thermal_capacitance_j_per_k', parseFloat(e.target.value) || 250)}
-                className="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-right text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="field-input w-20"
               />
             </div>
 
@@ -175,8 +175,8 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
               disabled={gpus.length <= 1}
               className={`p-1.5 rounded transition ${
                 gpus.length <= 1
-                  ? 'text-slate-600 cursor-not-allowed'
-                  : 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/30'
+                  ? 'cursor-not-allowed text-slate-300'
+                  : 'text-slate-400 hover:bg-rose-50 hover:text-rose-700'
               }`}
               title="Remove GPU"
             >
@@ -188,7 +188,7 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
         {gpus.length < 8 && (
           <button
             onClick={addGpu}
-            className="w-full py-2 border border-dashed border-slate-700 rounded-lg text-xs font-medium text-slate-400 hover:text-indigo-300 hover:border-indigo-500/60 transition flex items-center justify-center gap-1.5"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 transition hover:border-cyan-700 hover:text-cyan-800"
           >
             <Plus className="w-4 h-4" /> Add GPU (up to 8)
           </button>
@@ -196,20 +196,20 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
       </div>
 
       {/* Global Controls & Simulation Run */}
-      <div className="border-t border-slate-800 pt-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4">
         <div className="flex flex-wrap items-center gap-4 text-xs">
-          <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+          <label className="flex cursor-pointer items-center gap-2 text-slate-700">
             <input
               type="checkbox"
               checked={enableAgmd}
               onChange={(e) => setEnableAgmd(e.target.checked)}
-              className="rounded bg-slate-800 border-slate-700 text-cyan-600 focus:ring-0"
+              className="rounded border-slate-300 text-cyan-800 focus:ring-0"
             />
             <span>Enable AGMD Distillation</span>
           </label>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">Duration (s):</span>
+            <span className="field-label">Duration (s)</span>
             <input
               type="number"
               min="10"
@@ -217,12 +217,12 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
               step="10"
               value={durationS}
               onChange={(e) => setDurationS(parseFloat(e.target.value) || 60)}
-              className="w-16 px-2 py-1 bg-slate-950 border border-slate-700 rounded text-right text-slate-200"
+              className="field-input w-16"
             />
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">dt (s):</span>
+            <span className="field-label">dt (s)</span>
             <input
               type="number"
               min="0.1"
@@ -230,12 +230,12 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
               step="0.5"
               value={timeStepS}
               onChange={(e) => setTimeStepS(parseFloat(e.target.value) || 1.0)}
-              className="w-14 px-2 py-1 bg-slate-950 border border-slate-700 rounded text-right text-slate-200"
+              className="field-input w-14"
             />
           </div>
 
-          <div className="text-slate-400">
-            Cluster Total: <span className="font-semibold text-indigo-400">{totalPower} W</span>
+          <div className="text-slate-500">
+            Cluster total: <span className="font-semibold text-slate-800">{totalPower} W</span>
           </div>
         </div>
 
@@ -243,7 +243,7 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
           <button
             onClick={onReset}
             disabled={loading}
-            className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition flex items-center gap-1.5"
+            className="btn-secondary"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Reset
           </button>
@@ -251,17 +251,13 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
           <button
             onClick={onSimulate}
             disabled={loading}
-            className={`px-4 py-2 rounded-lg font-medium text-xs transition flex items-center gap-2 ${
-              loading
-                ? 'bg-indigo-700 text-slate-300 cursor-wait'
-                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-            }`}
+            className="btn-primary"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             {loading ? 'Simulating Physics...' : 'Run Simulation'}
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

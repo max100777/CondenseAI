@@ -12,6 +12,8 @@ interface Props {
   secondaryOutletTempC: number;
   isSelected: boolean;
   onSelect: () => void;
+  plates: boolean;
+  exploded: boolean;
   showLabels: boolean;
   showHeatmap: boolean;
 }
@@ -25,6 +27,7 @@ export const HeatExchanger3D: React.FC<Props> = ({
   secondaryOutletTempC,
   isSelected,
   onSelect,
+  plates, exploded,
   showLabels,
   showHeatmap,
 }) => {
@@ -37,15 +40,25 @@ export const HeatExchanger3D: React.FC<Props> = ({
   return (
     <group position={hxPos} onClick={(e) => { e.stopPropagation(); onSelect(); }}>
       {/* Exchanger Main Stainless Steel Frame */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[1.1, 2.2, 0.9]} />
-        <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.2} />
-      </mesh>
+      {!plates && !exploded && <group>
+        {[-.46, .46].map(z => <mesh key={z} position={[0, 0, z]} castShadow receiveShadow>
+          <boxGeometry args={[1.12, 2.2, .10]} />
+          <meshStandardMaterial color="#526574" metalness={.76} roughness={.35} />
+        </mesh>)}
+        {Array.from({length: 11}, (_, index) => <mesh key={index} position={[0, 0, -.39 + index * .078]} castShadow receiveShadow>
+          <boxGeometry args={[1.0, 1.92, .044]} />
+          <meshStandardMaterial color="#9aa7ae" metalness={.8} roughness={.44} />
+        </mesh>)}
+        {[-.48, .48].flatMap(x => [-.99, .99].map(y => <mesh key={`${x}:${y}`} position={[x,y,0]} rotation={[Math.PI/2,0,0]}>
+          <cylinderGeometry args={[.043,.043,1.12,12]} />
+          <meshStandardMaterial color="#a8b4bd" metalness={.8} roughness={.39} />
+        </mesh>))}
+      </group>}
 
       {/* Internal Plate Pack (Alternating Flow Channels) */}
-      <group position={[0, 0, 0]}>
+      <group visible={plates || exploded}>
         {[-0.3, -0.15, 0.0, 0.15, 0.3].map((z, idx) => (
-          <mesh key={z} position={[0, 0, z]}>
+          <mesh key={z} position={[exploded ? z : 0, 0, z * (exploded ? 4 : 1)]}>
             <boxGeometry args={[0.95, 1.8, 0.04]} />
             <meshStandardMaterial
               color={idx % 2 === 0 ? (showHeatmap ? primaryInColor : '#0284c7') : (showHeatmap ? secondaryOutColor : '#059669')}

@@ -34,7 +34,8 @@ export const AGMDModule3D: React.FC<Props> = ({
   onSelect,
   displayOptions,
 }) => {
-  const { showLabels, showHeatmap, agmdCutaway, flowAnimation } = displayOptions;
+  const { showLabels, showHeatmap, agmdCutaway, flowAnimation, exploded } = displayOptions;
+  const spacing = exploded ? 4 : 1;
 
   const feedColor = getTemperatureColor(feedTempC);
   const memHotColor = getTemperatureColor(membraneHotTempC);
@@ -57,7 +58,7 @@ export const AGMDModule3D: React.FC<Props> = ({
   }, [particleCount]);
 
   useFrame((_, delta) => {
-    if (!particlesRef.current || !flowAnimation || vaporFluxLMH <= 0.001) return;
+    if (!particlesRef.current || !flowAnimation || vaporFluxLMH <= 0) return;
     const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
     const speed = Math.min(0.25, Math.max(0.02, (vaporFluxLMH / 10.0) * 0.2)) * delta;
 
@@ -82,7 +83,7 @@ export const AGMDModule3D: React.FC<Props> = ({
       </mesh>
 
       {/* Casing: In Cutaway mode, top and front are removed/opened */}
-      {!agmdCutaway && (
+      {!agmdCutaway && !exploded && (
         <mesh position={[0, 0, 0]}>
           <boxGeometry args={[1.1, 1.45, 1.1]} />
           <meshStandardMaterial
@@ -96,7 +97,7 @@ export const AGMDModule3D: React.FC<Props> = ({
       )}
 
       {/* Layer 1: Hot Saline Feed Channel (Left, X = -0.22) */}
-      <group position={[-0.22, 0, 0]}>
+      <group position={[-0.22 * spacing, 0, 0]}>
         <mesh>
           <boxGeometry args={[0.16, 1.3, 0.95]} />
           <meshStandardMaterial
@@ -117,7 +118,7 @@ export const AGMDModule3D: React.FC<Props> = ({
       </group>
 
       {/* Layer 2: Hydrophobic Microporous Membrane (PTFE) (X = -0.11) */}
-      <group position={[-0.11, 0, 0]}>
+      <group position={[-0.11 * spacing, 0, 0]}>
         <mesh>
           <boxGeometry args={[0.025, 1.3, 0.95]} />
           <meshStandardMaterial
@@ -148,7 +149,7 @@ export const AGMDModule3D: React.FC<Props> = ({
         </mesh>
 
         {/* Explanatory Vapor Diffusion Particles */}
-        {vaporFluxLMH > 0.001 && (
+        {flowAnimation && vaporFluxLMH > 0 && (
           <points ref={particlesRef}>
             <bufferGeometry>
               <bufferAttribute
@@ -170,7 +171,7 @@ export const AGMDModule3D: React.FC<Props> = ({
       </group>
 
       {/* Layer 4: Cold Condensation Plate (X = +0.11) */}
-      <group position={[0.11, 0, 0]}>
+      <group position={[0.11 * spacing, 0, 0]}>
         <mesh>
           <boxGeometry args={[0.04, 1.3, 0.95]} />
           <meshStandardMaterial
