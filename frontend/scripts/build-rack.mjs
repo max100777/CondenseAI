@@ -13,7 +13,7 @@ globalThis.FileReader = class {
 const scene = new T.Scene();
 const palette = {
   graphite: '#243341', rail: '#8799a6', dark: '#111b25', pcb: '#146353',
-  supply: '#378cc7', return: '#ce654e', indicator: '#75dbbc'
+  supply: '#378cc7', return: '#ce654e', indicator: '#75dbbc', copper: '#bd7956', ceramic:'#b1a595'
 };
 function assembly(name, draw) {
   const group = new T.Group();
@@ -57,6 +57,29 @@ assembly('Tray', box => {
   for(const x of [-.79,.79]) box('rail',x,.13,.645,.12,.12,.07);
   for(let i=0;i<22;i++) box('rail',-.58+i*.052,.11,.624,.018,.095,.009);
   box('indicator',.66,.15,.63,.042,.024,.01);
+  for(const x of [-.89,.89]) box('rail',x,.095,0,.035,.17,1.16);
+  for(const z of [-.47,-.17,.13,.43]) {
+    for(const x of [-.39,.39]) {
+      box('dark',x,.065,z,.54,.035,.25);
+      for(const dx of [-.23,.23]) box('rail',x+dx,.083,z,.018,.018,.22);
+    }
+  }
+  for(const x of [-.78,.78]) {
+    box(x<0?'supply':'return',x,.105,0,.054,.06,1.1);
+    box('rail',x,.105,-.54,.095,.09,.08);
+  }
+});
+assembly('Accelerator', box => {
+  box('pcb',0,.013,0,.52,.026,.245);
+  box('copper',0,.043,0,.32,.037,.195);
+  box('rail',0,.071,0,.30,.025,.18);
+  for(const x of [-.205,.205]) {
+    for(let i=0;i<6;i++) {
+      box('dark',x,.036,-.087+i*.035,.052,.025,.022);
+      box('ceramic',x*.84,.031,-.087+i*.035,.016,.016,.012);
+    }
+  }
+  for(const x of [-.135,.135]) for(const z of [-.075,.075]) box('graphite',x,.086,z,.018,.01,.018);
 });
 const output = new URL('../public/models/', import.meta.url);
 await mkdir(output, {recursive:true});

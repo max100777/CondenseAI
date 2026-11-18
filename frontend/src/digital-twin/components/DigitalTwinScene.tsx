@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import { ComponentType, CameraPreset, DisplayOptions, TelemetryState } from '../types';
 import { GPUConfig, GPUState } from '../../types';
 import { CAMERA_PRESETS } from '../utils/spatialLayout';
+import { acceleratorSlot, serviceExtension } from '../utils/acceleratorLayout';
 import { GPUCluster3D } from './GPUCluster3D';
+import { PlantStage } from './PlantStage';
 import { PrimaryCoolantLoop3D } from './PrimaryCoolantLoop3D';
 import { HeatExchanger3D } from './HeatExchanger3D';
 import { SecondaryWaterLoop3D } from './SecondaryWaterLoop3D';
@@ -42,9 +44,10 @@ function Flow({from, to, color}: {from: Point; to: Point; color: string}) {
 
 // Camera transition controller
 const CameraController: React.FC<{
+  gpuIndex: number;
   cameraPreset: CameraPreset;
   controlsRef: React.RefObject<any>;
-}> = ({ cameraPreset, controlsRef }) => {
+}> = ({ cameraPreset, controlsRef, gpuIndex }) => {
   const { camera, size } = useThree();
   const transitioning = useRef(true);
   const targetConfig = CAMERA_PRESETS[cameraPreset];
@@ -55,16 +58,23 @@ const CameraController: React.FC<{
     const cfg = CAMERA_PRESETS[cameraPreset];
     targetPos.current.set(...cfg.position);
     targetLook.current.set(...cfg.target);
+    if (cameraPreset === 'gpu' && gpuIndex >= 0) {
+      const slot = acceleratorSlot(gpuIndex);
+      targetLook.current.set(-5 + slot.x, slot.trayY+.15, serviceExtension+slot.z);
+      targetPos.current.copy(targetLook.current).add(new THREE.Vector3(.55, 1.05, .92));
+    }
     if (cameraPreset === 'overview' && camera instanceof THREE.PerspectiveCamera) {
-      const distance = 7.3 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * size.width / size.height);
-      targetPos.current.set(1.5, 3.1, Math.max(7.8, distance));
+      const verticalHalfAngle = THREE.MathUtils.degToRad(camera.fov / 2);
+      const aspect = size.width / Math.max(1, size.height);
+      const distance = 8.2 / (Math.tan(verticalHalfAngle) * aspect);
+      targetPos.current.set(1.5, 3.6, Math.max(10.7, distance));
     }
     transitioning.current = true;
     const controls = controlsRef.current;
     const release = () => { transitioning.current = false; };
     controls?.addEventListener('start', release);
     return () => controls?.removeEventListener('start', release);
-  }, [cameraPreset, size.width, size.height, camera, controlsRef]);
+  }, [cameraPreset, size.width, size.height, camera, controlsRef, gpuIndex]);
 
   useFrame(() => {
     if (!transitioning.current) return;
@@ -112,31 +122,18 @@ export const DigitalTwinScene: React.FC<Props> = ({
       <Canvas
         camera={{ position: [0.0, 3.5, 11.5], fov: 45 }}
         onPointerMissed={() => onSelectComponent(null)}
+        shadows
+        dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: false }}
       >
-        <color attach="background" args={['#132438']} />
-        <hemisphereLight args={['#dcefff', '#6d8292', 1.2]} />
-
-        {/* Ambient & Directional Lighting */}
-        <ambientLight intensity={0.65} />
-        <directionalLight position={[6, 10, 8]} intensity={1.2} castShadow />
-        <directionalLight position={[-8, 6, -4]} intensity={0.5} />
-        <pointLight position={[-1.4, 2, 2]} intensity={0.4} color="#38bdf8" />
-        <pointLight position={[5.2, 2, 2]} intensity={0.4} color="#06b6d4" />
-
-        {/* Studio Floor Grid */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0,-2.14,0]}>
-          <planeGeometry args={[60,60]} />
-          <meshStandardMaterial color="#22374b" roughness={0.95} />
-        </mesh>
-        <gridHelper args={[30, 30, '#52738b', '#354d63']} position={[0, -2.13, 0]} />
+        <PlantStage />
 
         {/* Camera Controller & OrbitControls */}
-        <CameraController cameraPreset={cameraPreset} controlsRef={controlsRef} />
+        <CameraController cameraPreset={cameraPreset} controlsRef={controlsRef} gpuIndex={gpuStates.findIndex(gpu => gpu.gpu_id === selectedGPU)} />
         <OrbitControls
           ref={controlsRef}
           enableDamping
-          minDistance={2.5}
+          minDistance={.8}
           maxDistance={50}
           maxPolarAngle={Math.PI / 2 + 0.02}
         />

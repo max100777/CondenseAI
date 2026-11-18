@@ -47,7 +47,7 @@ export const CAMERA_PRESETS: Record<CameraPreset, { position: [number, number, n
     target: [0.0, 0.0, 0.0],
   },
   gpu: {
-    position: [-5.0, 1.5, 4.0],
+    position: [-3.8, 1.6, 5.0],
     target: [-5.0, 0.0, 0.0],
   },
   hx: {

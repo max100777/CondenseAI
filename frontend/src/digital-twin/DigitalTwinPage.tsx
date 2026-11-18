@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { slotsPerTray } from './utils/acceleratorLayout';
 import { MultiGPUSimulationResponse, GPUConfig } from '../types';
 import { CameraPreset, DisplayOptions, ComponentType } from './types';
 import { useDigitalTwinData } from './hooks/useDigitalTwinData';
@@ -42,10 +43,10 @@ export const DigitalTwinPage: React.FC<Props> = ({
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('overview');
   const [selectedComponent, setSelectedComponent] = useState<ComponentType | null>(null);
 
-  // Fix 4: Thermal heatmap shader enabled by default for immediate physical feedback
+  // Start with equipment materials visible. Heatmap is available in the viewport controls.
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showLabels: false,
-    showHeatmap: true,
+    showHeatmap: false,
     flowAnimation: true,
     agmdCutaway: false,
     transparentPipes: false, exploded: false, plates: false, energy: false,
@@ -172,7 +173,7 @@ export const DigitalTwinPage: React.FC<Props> = ({
     setTourIndex(null);
     setCameraPreset('gpu');
     setRackOpen(!rackOpen);
-    setSelectedGPU(null);
+    setSelectedGPU(rackOpen ? null : activeStep?.gpu_states[0]?.gpu_id ?? null);
     setSelectedComponent(null);
   }
 
@@ -195,9 +196,10 @@ export const DigitalTwinPage: React.FC<Props> = ({
         <button className="btn-secondary" aria-expanded={rackOpen} onClick={toggleRack}>{rackOpen ? 'Close rack' : 'Open rack'}</button>
         {rackOpen && <label>Inspect GPU <select className="field-input ml-2" value={inspected?.gpu_id ?? ''} onChange={e=>e.target.value ? inspectGPU(e.target.value) : setSelectedGPU(null)}>
           <option value="">Stow trays</option>
-          {activeStep?.gpu_states.map((g,i)=><option key={g.gpu_id} value={g.gpu_id}>Tray {Math.floor(i/2)+1} · {g.gpu_id}</option>)}
+          {activeStep?.gpu_states.map((g,i)=><option key={g.gpu_id} value={g.gpu_id}>Tray {Math.floor(i/slotsPerTray)+1} · Slot {i % slotsPerTray + 1} · {g.gpu_id}</option>)}
         </select></label>}
         {rackOpen && inspected && <span className="font-mono">{inspected.current_temp_c.toFixed(1)} °C · {inspected.power_w.toFixed(0)} W electrical · {inspected.heat_to_coolant_w.toFixed(1)} W to coolant</span>}
+        {rackOpen && <a href="https://www.amd.com/en/products/accelerators/instinct/mi300/platform.html" target="_blank" rel="noreferrer" className="text-slate-600 underline">Eight-slot OAM baseboard · hardware reference</a>}
       </div>
       {stage && <p aria-live="polite" className="border-t bg-cyan-50 px-4 py-3 text-sm"><strong>{(tourIndex ?? 0)+1} / {tour.length}</strong> · {stage.caption}</p>}
       {health.length > 0 && <div className="flex flex-wrap items-center gap-2 border-t p-3 text-xs"><strong>Simulated operating states</strong>{health.map(([name,state,reason]) =>
@@ -227,7 +229,7 @@ export const DigitalTwinPage: React.FC<Props> = ({
       )}
 
       {/* 3D Scene Viewport */}
-      <div className="h-[clamp(320px,52vh,600px)] w-full">
+      <div className="h-[clamp(360px,60vh,700px)] w-full">
         <DigitalTwinScene
           telemetry={telemetryState}
           hasData={!!activeStep}

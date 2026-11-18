@@ -91,7 +91,7 @@ export const MultiGPUControlPanel: React.FC<Props> = ({
         {/* Preset Buttons */}
         <div className="flex items-center gap-2 text-xs">
           <span className="field-label">Cluster preset</span>
-          {[1, 2, 4].map((n) => (
+          {[1, 2, 4, 8].map((n) => (
             <button
               key={n}
               onClick={() => setPresetCount(n)}
