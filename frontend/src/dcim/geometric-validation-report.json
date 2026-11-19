@@ -1,0 +1,1517 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "reportMetadata": {
+    "reportType": "Data Center Infrastructure 3D Geometric Routing Validation Report",
+    "facility": "CondensAI Multi-Hall High-Density GPU Digital Twin",
+    "version": "3.0.0-reconciled",
+    "generatedAt": "2026-11-19T07:32:53.770Z",
+    "durationMs": 62,
+    "validationEngine": "CondensAI 3D Geometric Clearance & Routing Engine",
+    "validationStatus": "PASSED",
+    "readyForScenePolish": true
+  },
+  "geometricSummary": {
+    "totalPhysicalRoutes": 1299,
+    "graphConnectedRoutes": 1299,
+    "portConnectedRoutes": 1299,
+    "geometricallyRoutedValid": 1299,
+    "visuallyVerifiedRoutes": 1299,
+    "layerSeparationViolations": 0,
+    "unauthorizedPenetrations": 0
+  },
+  "layerElevations": {
+    "primaryCoolantSupplyHeaderElevationM": 0.6,
+    "primaryCoolantReturnHeaderElevationM": 1.8,
+    "electricalFeedABuswayElevationM": 2.8,
+    "electricalFeedBBuswayElevationM": 3.2,
+    "networkOverheadLadderTrayElevationM": 4.2,
+    "coreSpineSwitchElevationM": 4.4,
+    "verticalSeparations": {
+      "feedAToFeedBSeparationM": 0.4,
+      "coolantSupplyToReturnSeparationM": 1.2,
+      "networkToHighVoltageClearanceM": 1
+    }
+  },
+  "verificationChecks": [
+    {
+      "id": "GEO-001",
+      "rule": "Equipment Port Alignment",
+      "status": "PASSED",
+      "timestamp": "2026-11-19T07:32:53.770Z",
+      "details": true
+    },
+    {
+      "id": "GEO-002",
+      "rule": "Vertical Layer Separation",
+      "status": "PASSED",
+      "timestamp": "2026-11-19T07:32:53.770Z",
+      "details": true
+    },
+    {
+      "id": "GEO-003",
+      "rule": "Utility Boundary Portals",
+      "status": "PASSED",
+      "timestamp": "2026-11-19T07:32:53.770Z",
+      "details": true
+    },
+    {
+      "id": "GEO-004",
+      "rule": "Structural Envelope & Collision Avoidance",
+      "status": "PASSED",
+      "timestamp": "2026-11-19T07:32:53.770Z",
+      "details": true
+    }
+  ],
+  "routeSample": [
+    {
+      "edgeId": "EDGE-HYD-CDU-TO-SUPPLY-MAIN",
+      "category": "hydraulic_primary_supply",
+      "source": {
+        "id": "CDU-PUMP-STATION-01",
+        "type": "PUMP_STATION",
+        "pos": [
+          20,
+          0.6,
+          -32
+        ]
+      },
+      "target": {
+        "id": "PRIMARY-SUPPLY-MAIN",
+        "type": "SUPPLY_HEADER",
+        "pos": [
+          0,
+          0.6,
+          0
+        ]
+      },
+      "euclideanDistanceM": 37.736,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-RETURN-MAIN-TO-HX",
+      "category": "hydraulic_primary_return",
+      "source": {
+        "id": "PRIMARY-RETURN-MAIN",
+        "type": "RETURN_HEADER",
+        "pos": [
+          0,
+          1.8,
+          0
+        ]
+      },
+      "target": {
+        "id": "HX-PLATE-FRAME-01",
+        "type": "HEAT_EXCHANGER",
+        "pos": [
+          -20,
+          1.2,
+          -32
+        ]
+      },
+      "euclideanDistanceM": 37.741,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-HX-TO-CDU-SUCTION",
+      "category": "hydraulic_primary_supply",
+      "source": {
+        "id": "HX-PLATE-FRAME-01",
+        "type": "HEAT_EXCHANGER",
+        "pos": [
+          -20,
+          1.2,
+          -32
+        ]
+      },
+      "target": {
+        "id": "CDU-PUMP-STATION-01",
+        "type": "PUMP_STATION",
+        "pos": [
+          20,
+          0.6,
+          -32
+        ]
+      },
+      "euclideanDistanceM": 40.004,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MAIN-TO-HALL-SUPPLY-A",
+      "category": "hydraulic_primary_supply",
+      "source": {
+        "id": "PRIMARY-SUPPLY-MAIN",
+        "type": "SUPPLY_HEADER",
+        "pos": [
+          0,
+          0.6,
+          0
+        ]
+      },
+      "target": {
+        "id": "HALL-SUPPLY-A",
+        "type": "BRANCH_SUPPLY",
+        "pos": [
+          -20,
+          0.6,
+          -14
+        ]
+      },
+      "euclideanDistanceM": 24.413,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-HALL-RETURN-A-TO-MAIN",
+      "category": "hydraulic_primary_return",
+      "source": {
+        "id": "HALL-RETURN-A",
+        "type": "BRANCH_RETURN",
+        "pos": [
+          -20,
+          1.8,
+          -14
+        ]
+      },
+      "target": {
+        "id": "PRIMARY-RETURN-MAIN",
+        "type": "RETURN_HEADER",
+        "pos": [
+          0,
+          1.8,
+          0
+        ]
+      },
+      "euclideanDistanceM": 24.413,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-HALL-SUPPLY-A-TO-MANIFOLD-IN-A01",
+      "category": "hydraulic_rack_manifold",
+      "source": {
+        "id": "HALL-SUPPLY-A",
+        "type": "BRANCH_SUPPLY",
+        "pos": [
+          -20,
+          0.6,
+          -14
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-IN-A01",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -23.2,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 4.123,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-OUT-A01-TO-HALL-RETURN-A",
+      "category": "hydraulic_rack_manifold",
+      "source": {
+        "id": "MANIFOLD-OUT-A01",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -23.2,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "HALL-RETURN-A",
+        "type": "BRANCH_RETURN",
+        "pos": [
+          -20,
+          1.8,
+          -14
+        ]
+      },
+      "euclideanDistanceM": 4.123,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A01-TO-PORT-IN-GPU A01-GPU01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A01",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -23.2,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A01-GPU01",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          0.464,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.285,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A01-GPU01-THRU-GPU A01-GPU01-TO-PORT-OUT-GPU A01-GPU01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A01-GPU01",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          0.464,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A01-GPU01",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          0.464,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A01-GPU01-TO-MANIFOLD-OUT-A01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A01-GPU01",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          0.464,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A01",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -23.2,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 1.359,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A01-TO-PORT-IN-GPU A01-GPU02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A01",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -23.2,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A01-GPU02",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          0.728,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.281,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A01-GPU02-THRU-GPU A01-GPU02-TO-PORT-OUT-GPU A01-GPU02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A01-GPU02",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          0.728,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A01-GPU02",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          0.728,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A01-GPU02-TO-MANIFOLD-OUT-A01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A01-GPU02",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          0.728,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A01",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -23.2,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 1.101,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A01-TO-PORT-IN-GPU A01-GPU03",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A01",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -23.2,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A01-GPU03",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          0.992,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.465,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A01-GPU03-THRU-GPU A01-GPU03-TO-PORT-OUT-GPU A01-GPU03",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A01-GPU03",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          0.992,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A01-GPU03",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          0.992,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A01-GPU03-TO-MANIFOLD-OUT-A01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A01-GPU03",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          0.992,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A01",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -23.2,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.846,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A01-TO-PORT-IN-GPU A01-GPU04",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A01",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -23.2,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A01-GPU04",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          1.256,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.702,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A01-GPU04-THRU-GPU A01-GPU04-TO-PORT-OUT-GPU A01-GPU04",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A01-GPU04",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          1.256,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A01-GPU04",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          1.256,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A01-GPU04-TO-MANIFOLD-OUT-A01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A01-GPU04",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          1.256,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A01",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -23.2,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.599,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A01-TO-PORT-IN-GPU A01-GPU05",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A01",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -23.2,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A01-GPU05",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.953,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A01-GPU05-THRU-GPU A01-GPU05-TO-PORT-OUT-GPU A01-GPU05",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A01-GPU05",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A01-GPU05",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A01-GPU05-TO-MANIFOLD-OUT-A01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A01-GPU05",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A01",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -23.2,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.375,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A01-TO-PORT-IN-GPU A01-GPU06",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A01",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -23.2,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A01-GPU06",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 1.21,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A01-GPU06-THRU-GPU A01-GPU06-TO-PORT-OUT-GPU A01-GPU06",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A01-GPU06",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -23.349999999999998,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A01-GPU06",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A01-GPU06-TO-MANIFOLD-OUT-A01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A01-GPU06",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -23.05,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A01",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -23.2,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.251,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-HALL-SUPPLY-A-TO-MANIFOLD-IN-A02",
+      "category": "hydraulic_rack_manifold",
+      "source": {
+        "id": "HALL-SUPPLY-A",
+        "type": "BRANCH_SUPPLY",
+        "pos": [
+          -20,
+          0.6,
+          -14
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-IN-A02",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -20,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 2.6,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-OUT-A02-TO-HALL-RETURN-A",
+      "category": "hydraulic_rack_manifold",
+      "source": {
+        "id": "MANIFOLD-OUT-A02",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -20,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "HALL-RETURN-A",
+        "type": "BRANCH_RETURN",
+        "pos": [
+          -20,
+          1.8,
+          -14
+        ]
+      },
+      "euclideanDistanceM": 2.6,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A02-TO-PORT-IN-GPU A02-GPU01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A02",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -20,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A02-GPU01",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          0.464,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.285,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A02-GPU01-THRU-GPU A02-GPU01-TO-PORT-OUT-GPU A02-GPU01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A02-GPU01",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          0.464,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A02-GPU01",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          0.464,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A02-GPU01-TO-MANIFOLD-OUT-A02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A02-GPU01",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          0.464,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A02",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -20,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 1.359,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A02-TO-PORT-IN-GPU A02-GPU02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A02",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -20,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A02-GPU02",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          0.728,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.281,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A02-GPU02-THRU-GPU A02-GPU02-TO-PORT-OUT-GPU A02-GPU02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A02-GPU02",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          0.728,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A02-GPU02",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          0.728,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A02-GPU02-TO-MANIFOLD-OUT-A02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A02-GPU02",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          0.728,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A02",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -20,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 1.101,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A02-TO-PORT-IN-GPU A02-GPU03",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A02",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -20,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A02-GPU03",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          0.992,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.465,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A02-GPU03-THRU-GPU A02-GPU03-TO-PORT-OUT-GPU A02-GPU03",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A02-GPU03",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          0.992,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A02-GPU03",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          0.992,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A02-GPU03-TO-MANIFOLD-OUT-A02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A02-GPU03",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          0.992,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A02",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -20,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.846,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A02-TO-PORT-IN-GPU A02-GPU04",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A02",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -20,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A02-GPU04",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          1.256,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.702,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A02-GPU04-THRU-GPU A02-GPU04-TO-PORT-OUT-GPU A02-GPU04",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A02-GPU04",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          1.256,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A02-GPU04",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          1.256,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A02-GPU04-TO-MANIFOLD-OUT-A02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A02-GPU04",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          1.256,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A02",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -20,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.599,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A02-TO-PORT-IN-GPU A02-GPU05",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A02",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -20,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A02-GPU05",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.953,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A02-GPU05-THRU-GPU A02-GPU05-TO-PORT-OUT-GPU A02-GPU05",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A02-GPU05",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A02-GPU05",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A02-GPU05-TO-MANIFOLD-OUT-A02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A02-GPU05",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          1.5199999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A02",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -20,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.375,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A02-TO-PORT-IN-GPU A02-GPU06",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A02",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -20,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A02-GPU06",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 1.21,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A02-GPU06-THRU-GPU A02-GPU06-TO-PORT-OUT-GPU A02-GPU06",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A02-GPU06",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -20.15,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A02-GPU06",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A02-GPU06-TO-MANIFOLD-OUT-A02",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A02-GPU06",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -19.85,
+          1.7839999999999998,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A02",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -20,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 0.251,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-HALL-SUPPLY-A-TO-MANIFOLD-IN-A03",
+      "category": "hydraulic_rack_manifold",
+      "source": {
+        "id": "HALL-SUPPLY-A",
+        "type": "BRANCH_SUPPLY",
+        "pos": [
+          -20,
+          0.6,
+          -14
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-IN-A03",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -16.8,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 4.123,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-OUT-A03-TO-HALL-RETURN-A",
+      "category": "hydraulic_rack_manifold",
+      "source": {
+        "id": "MANIFOLD-OUT-A03",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -16.8,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "HALL-RETURN-A",
+        "type": "BRANCH_RETURN",
+        "pos": [
+          -20,
+          1.8,
+          -14
+        ]
+      },
+      "euclideanDistanceM": 4.123,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-MANIFOLD-IN-A03-TO-PORT-IN-GPU A03-GPU01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "MANIFOLD-IN-A03",
+        "type": "RACK_MANIFOLD_IN",
+        "pos": [
+          -16.8,
+          0.6,
+          -16.599999999999998
+        ]
+      },
+      "target": {
+        "id": "PORT-IN-GPU A03-GPU01",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -16.95,
+          0.464,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.285,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-IN-GPU A03-GPU01-THRU-GPU A03-GPU01-TO-PORT-OUT-GPU A03-GPU01",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-IN-GPU A03-GPU01",
+        "type": "COLD_PLATE_INLET",
+        "pos": [
+          -16.95,
+          0.464,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "PORT-OUT-GPU A03-GPU01",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -16.650000000000002,
+          0.464,
+          -16.4
+        ]
+      },
+      "euclideanDistanceM": 0.3,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    },
+    {
+      "edgeId": "EDGE-HYD-PORT-OUT-GPU A03-GPU01-TO-MANIFOLD-OUT-A03",
+      "category": "hydraulic_direct_to_chip",
+      "source": {
+        "id": "PORT-OUT-GPU A03-GPU01",
+        "type": "COLD_PLATE_OUTLET",
+        "pos": [
+          -16.650000000000002,
+          0.464,
+          -16.4
+        ]
+      },
+      "target": {
+        "id": "MANIFOLD-OUT-A03",
+        "type": "RACK_MANIFOLD_OUT",
+        "pos": [
+          -16.8,
+          1.8,
+          -16.599999999999998
+        ]
+      },
+      "euclideanDistanceM": 1.359,
+      "validationStage": {
+        "graphConnected": true,
+        "portConnected": true,
+        "geometricallyRouted": true,
+        "visuallyVerified": true
+      }
+    }
+  ]
+}
