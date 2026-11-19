@@ -10,6 +10,10 @@ import {
   Search,
   BarChart3,
   Compass,
+  Sun,
+  Moon,
+  Monitor,
+  Cpu,
 } from 'lucide-react';
 import {
   facilityData,
@@ -22,7 +26,7 @@ import {
   getGpuById,
   getParentRackOfGpu,
 } from './facilityData.ts';
-import FacilityScene3D, { HeatmapMode, CameraPreset } from './FacilityScene3D.tsx';
+import FacilityScene3D, { HeatmapMode, CameraPreset, RackViewMode } from './FacilityScene3D.tsx';
 import LayerControlPanel from './LayerControlPanel.tsx';
 import InspectorPanel from './InspectorPanel.tsx';
 import FacilityDashboard from './FacilityDashboard.tsx';
@@ -33,6 +37,7 @@ import { simulationController } from './simulation/simulationController.ts';
 import './console.css';
 
 type MainViewMode = 'twin' | 'dashboard' | 'hallAnalytics' | 'analytics' | 'diagnostics';
+type ThemeMode = 'dark' | 'light' | 'system';
 
 export default function Console() {
   // Master Simulation State & Telemetry History
@@ -41,6 +46,27 @@ export default function Console() {
 
   // Main Application Section Navigation
   const [mainView, setMainView] = useState<MainViewMode>('twin');
+
+  // Theme Management (Light, Dark, System)
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    return (localStorage.getItem('condensai-theme') as ThemeMode) || 'dark';
+  });
+
+  const effectiveTheme: 'dark' | 'light' = useMemo(() => {
+    if (theme === 'system') {
+      return typeof window !== 'undefined' &&
+        window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: light)').matches
+        ? 'light'
+        : 'dark';
+    }
+    return theme;
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('condensai-theme', theme);
+    document.documentElement.setAttribute('data-theme', effectiveTheme);
+  }, [theme, effectiveTheme]);
 
   // Interactive View & 3D Navigation State
   const [selection, setSelection] = useState<SelectionState>({
@@ -55,16 +81,27 @@ export default function Console() {
   const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
 
-  // 3D Visual Modes
+  // 3D Visual Modes & Telescoping Tray States
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('isometric');
+  const [rackViewMode, setRackViewMode] = useState<RackViewMode>('front');
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>('none');
   const [traceMode, setTraceMode] = useState<'none' | 'cooling' | 'electrical' | 'network'>('none');
   const [selectedTraceLoop] = useState<'all' | 'primary' | 'secondary' | 'feedA' | 'feedB' | 'none'>('all');
   const [isXrayMode, setIsXrayMode] = useState(false);
 
+  // Retractable Tray Extraction State
+  const [extendedTrayId, setExtendedTrayId] = useState<string | null>(null);
+  const [allTraysOpen, setAllTraysOpen] = useState(false);
+  const [hoveredComponent, setHoveredComponent] = useState<string | null>(null);
+
   // Search Bar State
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // 144 GPU Explorer Modal State
+  const [showGpuExplorer, setShowGpuExplorer] = useState(false);
+  const [explorerHallFilter, setExplorerHallFilter] = useState<string>('ALL');
+  const [explorerSortBy, setExplorerSortBy] = useState<'temp' | 'power' | 'util' | 'id'>('temp');
 
   // Modal Report State
   const [showReportModal, setShowReportModal] = useState(false);
@@ -88,6 +125,8 @@ export default function Console() {
   const handleSelectCampus = () => {
     setSelection({ level: 'campus', hallId: null, rackId: null, gpuId: null, infraComponent: null });
     setIsXrayMode(false);
+    setExtendedTrayId(null);
+    setAllTraysOpen(false);
   };
 
   const handleSelectHall = (hallId: string) => {
@@ -95,12 +134,18 @@ export default function Console() {
     if (!hall) return;
     setSelection({ level: 'hall', hallId: hall.id, rackId: null, gpuId: null, infraComponent: null });
     setIsXrayMode(false);
+    setExtendedTrayId(null);
+    setAllTraysOpen(false);
   };
 
   const handleSelectRack = (rackId: string) => {
     const rack = getRackById(rackId);
     if (!rack) return;
     setSelection({ level: 'rack', hallId: rack.hallId, rackId: rack.id, gpuId: null, infraComponent: null });
+    // Default: slide out first tray on rack click for immediate physical inspection
+    setExtendedTrayId(rack.gpus[0]?.id || null);
+    setCameraPreset('free');
+    setRackViewMode('front');
     setIsInspectorOpen(true);
   };
 
@@ -115,7 +160,18 @@ export default function Console() {
       gpuId: gpu.id,
       infraComponent: null,
     });
+    setExtendedTrayId(gpu.id);
+    setCameraPreset('free');
+    setRackViewMode('close');
     setIsInspectorOpen(true);
+  };
+
+  const handleToggleExtendTray = (targetGpuId: string) => {
+    setExtendedTrayId((prev) => (prev === targetGpuId ? null : targetGpuId));
+  };
+
+  const handleToggleAllTrays = () => {
+    setAllTraysOpen((prev) => !prev);
   };
 
   const handleSelectComponent = (comp: InfrastructureComponentRef) => {
@@ -137,14 +193,11 @@ export default function Console() {
 
     // Search Halls
     for (const h of facilityData.halls) {
-      if (h.name.toLowerCase().includes(q) || h.code.toLowerCase().includes(q)) {
+      if (h.name.toLowerCase().includes(q) || h.id.toLowerCase().includes(q)) {
         results.push({
           label: h.name,
-          sub: 'Data Hall',
-          action: () => {
-            handleSelectHall(h.id);
-            setMainView('twin');
-          },
+          sub: `${h.workloadProfile} (Data Hall)`,
+          action: () => handleSelectHall(h.id),
         });
       }
     }
@@ -152,44 +205,47 @@ export default function Console() {
     // Search Racks
     for (const h of facilityData.halls) {
       for (const r of h.racks) {
-        if (r.id.toLowerCase().includes(q) || r.code.toLowerCase().includes(q)) {
+        if (r.id.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)) {
           results.push({
             label: r.id,
-            sub: `${h.code} · Server Cabinet`,
-            action: () => {
-              handleSelectRack(r.id);
-              setMainView('twin');
-            },
+            sub: `${h.shortName} · Row ${r.row}`,
+            action: () => handleSelectRack(r.id),
           });
         }
       }
     }
 
-    // Search Key Infrastructure Components
-    const infraItems: InfrastructureComponentRef[] = [
-      { id: 'CDU-PUMP-STATION-01', type: 'CDU', name: 'Primary CDU & Pump Station', category: 'cooling', position: [20, 0.6, -32] },
-      { id: 'HX-PLATE-FRAME-01', type: 'HEAT_EXCHANGER', name: 'Plate & Frame Heat Exchanger', category: 'cooling', position: [-20, 1.2, -32] },
-      { id: 'TANK-THERMAL-BUFFER-01', type: 'SECONDARY_BUFFER', name: '15,000 L Thermal Buffer Tank', category: 'cooling', position: [-16.5, 1.6, -32] },
-      { id: 'AGMD-DESAL-MODULE', type: 'AGMD_MODULE', name: 'AGMD Desalination Cassette', category: 'desalination', position: [-20, 1.4, -28] },
-      { id: 'SUBSTATION-XFR-11KV', type: 'SUBSTATION_XFR', name: '11 kV Primary Transformer', category: 'electrical', position: [-20, 1.2, 32] },
-      { id: 'NET-CORE-SPINE-01', type: 'CORE_SWITCH', name: '800G Core Spine Switch', category: 'network', position: [0, 4.4, 0] },
-    ];
-
-    for (const item of infraItems) {
-      if (item.name.toLowerCase().includes(q) || item.id.toLowerCase().includes(q)) {
-        results.push({
-          label: item.name,
-          sub: item.category.toUpperCase(),
-          action: () => {
-            handleSelectComponent(item);
-            setMainView('twin');
-          },
-        });
+    // Search GPUs
+    for (const h of facilityData.halls) {
+      for (const r of h.racks) {
+        for (const g of r.gpus) {
+          if (g.id.toLowerCase().includes(q) || g.name.toLowerCase().includes(q)) {
+            results.push({
+              label: g.id,
+              sub: `${r.id} · RU ${g.slotU} · NVIDIA H100`,
+              action: () => handleSelectGpu(g.id),
+            });
+          }
+        }
       }
     }
 
     return results.slice(0, 8);
   }, [searchQuery]);
+
+  // All 144 GPUs Filtering & Sorting
+  const filtered144Gpus = useMemo(() => {
+    let list = Object.values(simState.gpus);
+    if (explorerHallFilter !== 'ALL') {
+      list = list.filter((g) => g.hallId === explorerHallFilter);
+    }
+    return list.sort((a, b) => {
+      if (explorerSortBy === 'temp') return b.temperatureC - a.temperatureC;
+      if (explorerSortBy === 'power') return b.powerW - a.powerW;
+      if (explorerSortBy === 'util') return b.utilization - a.utilization;
+      return a.id.localeCompare(b.id);
+    });
+  }, [simState.gpus, explorerHallFilter, explorerSortBy]);
 
   // Export handlers
   const exportCsv = () => {
@@ -222,7 +278,7 @@ export default function Console() {
   };
 
   return (
-    <main className="dcim-redesign">
+    <main className="dcim-redesign" data-theme={effectiveTheme}>
       {/* 1. TOP GLOBAL APPLICATION HEADER */}
       <header className="dc-header">
         <div className="dc-brand-group">
@@ -268,7 +324,7 @@ export default function Console() {
           </button>
         </nav>
 
-        {/* Global Quick Telemetry Stats */}
+        {/* Global Quick Telemetry Stats & Theme Toggle */}
         <div className="dc-header-stats">
           <div className="dc-stat">
             <small>IT LOAD</small>
@@ -282,6 +338,32 @@ export default function Console() {
             <small>WATER</small>
             <strong style={{ color: '#38bdf8' }}>{simState.agmd.freshwaterProductionRateL_H.toFixed(1)} L/h</strong>
           </div>
+
+          {/* Theme Selector (Dark, Light, System) */}
+          <div className="dc-theme-toggle-group">
+            <button
+              className={`dc-theme-btn ${theme === 'dark' ? 'active' : ''}`}
+              onClick={() => setTheme('dark')}
+              title="Dark Theme"
+            >
+              <Moon size={13} />
+            </button>
+            <button
+              className={`dc-theme-btn ${theme === 'light' ? 'active' : ''}`}
+              onClick={() => setTheme('light')}
+              title="Light Theme"
+            >
+              <Sun size={13} />
+            </button>
+            <button
+              className={`dc-theme-btn ${theme === 'system' ? 'active' : ''}`}
+              onClick={() => setTheme('system')}
+              title="System Theme"
+            >
+              <Monitor size={13} />
+            </button>
+          </div>
+
           <a href="/?lab" className="dc-lab-link" title="Switch to Single GPU Thermal Laboratory">
             GPU Lab →
           </a>
@@ -361,6 +443,18 @@ export default function Console() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* 144-GPU Explorer Button */}
+              <div className="dc-tool-group">
+                <button
+                  className={`dc-toggle-btn ${showGpuExplorer ? 'active' : ''}`}
+                  onClick={() => setShowGpuExplorer(!showGpuExplorer)}
+                  title="Browse and filter all 144 GPUs"
+                >
+                  <Cpu size={13} />
+                  <span>144 GPU Explorer</span>
+                </button>
               </div>
 
               {/* Camera Presets Bar */}
@@ -475,6 +569,98 @@ export default function Console() {
               onToggleOpen={() => setIsLayerPanelOpen(!isLayerPanelOpen)}
             />
 
+            {/* 144 GPU Explorer Popover Drawer */}
+            {showGpuExplorer && (
+              <div className="dc-gpu-explorer-modal">
+                <div className="dc-explorer-header">
+                  <div className="dc-explorer-title">
+                    <Cpu size={16} style={{ color: '#38bdf8' }} />
+                    <h3>Campus Accelerator Explorer (144 GPUs)</h3>
+                  </div>
+                  <button className="dc-close-btn" onClick={() => setShowGpuExplorer(false)}>
+                    ×
+                  </button>
+                </div>
+
+                <div className="dc-explorer-filters">
+                  <div className="dc-filter-group">
+                    <label>Filter Hall:</label>
+                    <select
+                      value={explorerHallFilter}
+                      onChange={(e) => setExplorerHallFilter(e.target.value)}
+                    >
+                      <option value="ALL">All Halls (144)</option>
+                      <option value="HALL-A">Hall A — AI Training (36)</option>
+                      <option value="HALL-B">Hall B — AI Inference (36)</option>
+                      <option value="HALL-C">Hall C — HPC & Research (36)</option>
+                      <option value="HALL-D">Hall D — Experimental (36)</option>
+                    </select>
+                  </div>
+
+                  <div className="dc-filter-group">
+                    <label>Sort By:</label>
+                    <select
+                      value={explorerSortBy}
+                      onChange={(e) => setExplorerSortBy(e.target.value as any)}
+                    >
+                      <option value="temp">Highest Junction Temperature</option>
+                      <option value="power">Highest Power Consumption</option>
+                      <option value="util">Highest Utilization</option>
+                      <option value="id">GPU Identifier</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="dc-explorer-table-container">
+                  <table className="dc-explorer-table">
+                    <thead>
+                      <tr>
+                        <th>GPU ID</th>
+                        <th>Hall</th>
+                        <th>Rack</th>
+                        <th>Temp</th>
+                        <th>Power</th>
+                        <th>Coolant Flow</th>
+                        <th>Util</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered144Gpus.map((g) => (
+                        <tr key={g.id}>
+                          <td><strong>{g.id}</strong></td>
+                          <td>{g.hallId}</td>
+                          <td>{g.rackId}</td>
+                          <td style={{ color: g.temperatureC > 72 ? '#f97316' : '#22c55e', fontWeight: 600 }}>
+                            {g.temperatureC.toFixed(1)} °C
+                          </td>
+                          <td>{g.powerW.toFixed(0)} W</td>
+                          <td>{(g.coolantFlowKgS * 60).toFixed(2)} L/min</td>
+                          <td>{(g.utilization * 100).toFixed(0)}%</td>
+                          <td>
+                            <span className={`dc-status-dot ${g.operatingStatus.toLowerCase()}`} />
+                            <small>{g.operatingStatus}</small>
+                          </td>
+                          <td>
+                            <button
+                              className="dc-inspect-mini-btn"
+                              onClick={() => {
+                                handleSelectGpu(g.id);
+                                setShowGpuExplorer(false);
+                              }}
+                            >
+                              Inspect & Slide Out
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {/* Master 3D Canvas */}
             <div className="dc-3d-canvas-container">
               <FacilityScene3D
@@ -487,11 +673,17 @@ export default function Console() {
                 traceMode={traceMode}
                 selectedTraceLoop={selectedTraceLoop}
                 cameraPreset={cameraPreset}
+                rackViewMode={rackViewMode}
                 isXrayMode={isXrayMode}
+                extendedTrayId={extendedTrayId}
+                allTraysOpen={allTraysOpen}
+                theme={effectiveTheme}
                 onSelectCampus={handleSelectCampus}
                 onSelectHall={handleSelectHall}
                 onSelectRack={handleSelectRack}
                 onSelectGpu={handleSelectGpu}
+                onToggleExtendTray={handleToggleExtendTray}
+                onHoverComponent={setHoveredComponent}
                 onSelectComponent={handleSelectComponent}
               />
             </div>
@@ -502,10 +694,17 @@ export default function Console() {
                 <InspectorPanel
                   selection={selection}
                   simulationState={simState}
+                  extendedTrayId={extendedTrayId}
+                  allTraysOpen={allTraysOpen}
+                  rackViewMode={rackViewMode}
+                  hoveredComponent={hoveredComponent}
                   onSelectCampus={handleSelectCampus}
                   onSelectHall={handleSelectHall}
                   onSelectRack={handleSelectRack}
                   onSelectGpu={handleSelectGpu}
+                  onToggleExtendTray={handleToggleExtendTray}
+                  onToggleAllTrays={handleToggleAllTrays}
+                  onChangeRackViewMode={setRackViewMode}
                   onSetTraceMode={setTraceMode}
                   activeTraceMode={traceMode}
                 />

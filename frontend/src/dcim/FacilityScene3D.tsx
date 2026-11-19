@@ -1,11 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import {
   HallConfig,
-  RackConfig,
-  GpuPlaceholder,
   FacilityInfrastructureZone,
   SelectionState,
   LayerVisibilityState,
@@ -13,9 +11,11 @@ import {
 } from './facilityData.ts';
 import type { IntegratedEngineeringState } from './simulation/engineeringState.ts';
 import FacilityInfrastructure3D from './FacilityInfrastructure3D.tsx';
+import { RealisticRackCabinet3D } from './RealisticGpuTray3D.tsx';
 
 export type HeatmapMode = 'none' | 'gpuTemp' | 'power' | 'coolantTemp' | 'capacity';
 export type CameraPreset = 'isometric' | 'topDown' | 'front' | 'side' | 'free';
+export type RackViewMode = 'front' | 'rear' | 'close';
 
 interface FacilitySceneProps {
   halls: HallConfig[];
@@ -27,32 +27,18 @@ interface FacilitySceneProps {
   traceMode: 'none' | 'cooling' | 'electrical' | 'network';
   selectedTraceLoop: 'all' | 'primary' | 'secondary' | 'feedA' | 'feedB' | 'none';
   cameraPreset: CameraPreset;
+  rackViewMode?: RackViewMode;
   isXrayMode: boolean;
+  extendedTrayId?: string | null;
+  allTraysOpen?: boolean;
+  theme?: 'dark' | 'light';
   onSelectCampus: () => void;
   onSelectHall: (hallId: string) => void;
   onSelectRack: (rackId: string) => void;
   onSelectGpu: (gpuId: string) => void;
+  onToggleExtendTray?: (gpuId: string) => void;
+  onHoverComponent?: (compName: string | null) => void;
   onSelectComponent: (component: InfrastructureComponentRef) => void;
-}
-
-/**
- * Maps continuous temperature to a professional technical color
- */
-function tempToColor(tempC: number): string {
-  if (tempC < 45.0) return '#38bdf8'; // Cyan
-  if (tempC < 65.0) return '#22c55e'; // Green
-  if (tempC < 75.0) return '#f59e0b'; // Amber
-  return '#ef4444'; // Red
-}
-
-/**
- * Maps electrical power to color
- */
-function powerToColor(powerW: number): string {
-  if (powerW < 350) return '#38bdf8';
-  if (powerW < 550) return '#22c55e';
-  if (powerW < 650) return '#f59e0b';
-  return '#ef4444';
 }
 
 /**
@@ -123,206 +109,6 @@ function SignPlacard({
 }
 
 /**
- * Detailed 4U GPU Server Tray inside a 42U rack
- */
-function GpuServerTray3D({
-  gpu,
-  simulationState,
-  heatmapMode,
-  isXrayMode,
-  isSelected,
-  onSelectGpu,
-}: {
-  gpu: GpuPlaceholder;
-  simulationState: IntegratedEngineeringState;
-  heatmapMode: HeatmapMode;
-  isXrayMode: boolean;
-  isSelected: boolean;
-  onSelectGpu: (id: string) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const gpuSim = simulationState.gpus[gpu.id];
-  const tempC = gpuSim ? gpuSim.temperatureC : 45.0;
-  const powerW = gpuSim ? gpuSim.powerW : 500.0;
-
-  let trayColor = '#1e293b';
-  let emissiveColor = '#000000';
-  let emissiveIntensity = 0;
-
-  if (heatmapMode === 'gpuTemp') {
-    trayColor = tempToColor(tempC);
-    emissiveColor = trayColor;
-    emissiveIntensity = 0.55;
-  } else if (heatmapMode === 'power') {
-    trayColor = powerToColor(powerW);
-    emissiveColor = trayColor;
-    emissiveIntensity = 0.45;
-  } else if (isSelected) {
-    trayColor = '#0284c7';
-    emissiveColor = '#38bdf8';
-    emissiveIntensity = 0.7;
-  } else if (hovered) {
-    trayColor = '#334155';
-    emissiveColor = '#0284c7';
-    emissiveIntensity = 0.3;
-  }
-
-  // Elevation inside 42U cabinet (y from -0.85 to 0.75)
-  const y = (gpu.slotU * 0.044) - 0.9;
-
-  return (
-    <group
-      position={[0, y, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelectGpu(gpu.id);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(true);
-      }}
-      onPointerOut={() => setHovered(false)}
-    >
-      {/* 4U Server Chassis Body */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[0.56, 0.14, 0.88]} />
-        <meshStandardMaterial
-          color={trayColor}
-          emissive={emissiveColor}
-          emissiveIntensity={emissiveIntensity}
-          metalness={0.7}
-          roughness={0.3}
-          transparent={isXrayMode}
-          opacity={isXrayMode ? 0.75 : 1.0}
-        />
-      </mesh>
-
-      {/* Internal Copper Cold Plate Representation */}
-      <mesh position={[0, 0.04, 0]}>
-        <boxGeometry args={[0.34, 0.03, 0.36]} />
-        <meshStandardMaterial color="#b45309" metalness={0.9} roughness={0.15} />
-      </mesh>
-
-      {/* Front Faceplate with Server Handle & LEDs */}
-      <mesh position={[0, 0, 0.45]}>
-        <boxGeometry args={[0.58, 0.15, 0.02]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
-      </mesh>
-      {/* Power LED Indicator */}
-      <mesh position={[-0.22, 0, 0.465]}>
-        <sphereGeometry args={[0.015, 8, 8]} />
-        <meshBasicMaterial color={gpuSim?.operatingStatus === 'Normal' ? '#22c55e' : '#ef4444'} />
-      </mesh>
-    </group>
-  );
-}
-
-/**
- * 42U Server Cabinet Component
- */
-function ServerRackCabinet3D({
-  rack,
-  simulationState,
-  heatmapMode,
-  isXrayMode,
-  isSelected,
-  selectedGpuId,
-  onSelectRack,
-  onSelectGpu,
-}: {
-  rack: RackConfig;
-  simulationState: IntegratedEngineeringState;
-  heatmapMode: HeatmapMode;
-  isXrayMode: boolean;
-  isSelected: boolean;
-  selectedGpuId: string | null;
-  onSelectRack: (id: string) => void;
-  onSelectGpu: (id: string) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const rackSim = simulationState.racks[rack.id];
-  const avgTemp = rackSim ? rackSim.averageGpuTempC : 45.0;
-
-  const frameColor = isSelected ? '#0284c7' : hovered ? '#475569' : '#1e293b';
-
-  return (
-    <group
-      position={rack.position}
-      rotation={[0, rack.facingZ < 0 ? Math.PI : 0, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelectRack(rack.id);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(true);
-      }}
-      onPointerOut={() => setHovered(false)}
-    >
-      {/* 42U Outer Sheet Metal Cabinet Enclosure */}
-      <mesh position={[0, 1.0, 0]}>
-        <boxGeometry args={[0.7, 2.0, 1.0]} />
-        <meshStandardMaterial
-          color={frameColor}
-          metalness={0.8}
-          roughness={0.25}
-          wireframe={isXrayMode || isSelected}
-          transparent={isXrayMode}
-          opacity={isXrayMode ? 0.35 : 1.0}
-        />
-      </mesh>
-
-      {/* Top of Rack (ToR) 400G Network Switch at RU 42 */}
-      <mesh position={[0, 1.9, 0]}>
-        <boxGeometry args={[0.58, 0.08, 0.85]} />
-        <meshStandardMaterial
-          color="#1e1b4b"
-          emissive="#a855f7"
-          emissiveIntensity={0.3}
-          metalness={0.8}
-          roughness={0.2}
-        />
-      </mesh>
-
-      {/* Dual Vertical Rack PDUs on Cabinet Sides */}
-      {[-0.32, 0.32].map((pduX, pduIdx) => (
-        <mesh key={pduX} position={[pduX, 1.0, -0.45]}>
-          <boxGeometry args={[0.04, 1.8, 0.06]} />
-          <meshStandardMaterial
-            color={pduIdx === 0 ? '#eab308' : '#f59e0b'}
-            metalness={0.7}
-            roughness={0.3}
-          />
-        </mesh>
-      ))}
-
-      {/* Interior 6 Discrete 4U Server Trays */}
-      {rack.gpus.map((gpu) => (
-        <GpuServerTray3D
-          key={gpu.id}
-          gpu={gpu}
-          simulationState={simulationState}
-          heatmapMode={heatmapMode}
-          isXrayMode={isXrayMode}
-          isSelected={selectedGpuId === gpu.id}
-          onSelectGpu={onSelectGpu}
-        />
-      ))}
-
-      {/* Rack Status Sign Placard Overhead */}
-      <SignPlacard
-        text={rack.id}
-        subtext={`${(rackSim?.totalITPowerW || 3000) / 1000} kW · ${avgTemp.toFixed(1)}°C`}
-        color={isSelected ? '#38bdf8' : '#64748b'}
-        position={[0, 2.2, 0]}
-        width={1.6}
-        height={0.45}
-      />
-    </group>
-  );
-}
-
-/**
  * Data Hall Structure Enclosure Component
  */
 function DataHall3D({
@@ -330,6 +116,9 @@ function DataHall3D({
   isSelected,
   selectedRackId,
   selectedGpuId,
+  extendedTrayId,
+  allTraysOpen,
+  theme,
   simulationState,
   layers,
   heatmapMode,
@@ -337,11 +126,16 @@ function DataHall3D({
   onSelectHall,
   onSelectRack,
   onSelectGpu,
+  onToggleExtendTray,
+  onHoverComponent,
 }: {
   hall: HallConfig;
   isSelected: boolean;
   selectedRackId: string | null;
   selectedGpuId: string | null;
+  extendedTrayId: string | null;
+  allTraysOpen?: boolean;
+  theme: 'dark' | 'light';
   simulationState: IntegratedEngineeringState;
   layers: LayerVisibilityState;
   heatmapMode: HeatmapMode;
@@ -349,6 +143,8 @@ function DataHall3D({
   onSelectHall: (id: string) => void;
   onSelectRack: (id: string) => void;
   onSelectGpu: (id: string) => void;
+  onToggleExtendTray?: (id: string) => void;
+  onHoverComponent?: (compName: string | null) => void;
 }) {
   const [w, h, d] = hall.dimensions;
   const [cx, cy, cz] = hall.center;
@@ -360,7 +156,7 @@ function DataHall3D({
         <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[w - 0.2, d - 0.2]} />
           <meshStandardMaterial
-            color="#0f172a"
+            color={theme === 'light' ? '#f8fafc' : '#0f172a'}
             metalness={0.5}
             roughness={0.4}
             polygonOffset
@@ -375,11 +171,21 @@ function DataHall3D({
           {/* Glass Partition Panels */}
           <mesh position={[0, h * 0.45, -d / 2]}>
             <planeGeometry args={[w, h * 0.9]} />
-            <meshStandardMaterial color="#0f172a" transparent opacity={0.2} roughness={0.1} />
+            <meshStandardMaterial
+              color={theme === 'light' ? '#94a3b8' : '#0f172a'}
+              transparent
+              opacity={0.15}
+              roughness={0.1}
+            />
           </mesh>
           <mesh position={[0, h * 0.45, d / 2]}>
             <planeGeometry args={[w, h * 0.9]} />
-            <meshStandardMaterial color="#0f172a" transparent opacity={0.2} roughness={0.1} />
+            <meshStandardMaterial
+              color={theme === 'light' ? '#94a3b8' : '#0f172a'}
+              transparent
+              opacity={0.15}
+              roughness={0.1}
+            />
           </mesh>
 
           {/* Illuminated Accent Boundary Lines */}
@@ -401,16 +207,16 @@ function DataHall3D({
           ].map(([colX, colZ], idx) => (
             <mesh key={idx} position={[colX, h / 2, colZ]}>
               <boxGeometry args={[0.6, h, 0.6]} />
-              <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+              <meshStandardMaterial color={theme === 'light' ? '#64748b' : '#334155'} metalness={0.8} roughness={0.2} />
             </mesh>
           ))}
         </group>
       )}
 
-      {/* 4. Installed 42U Server Racks */}
+      {/* 4. Installed 42U Server Racks with Retractable 4U Compute Sleds */}
       {layers.racks &&
         hall.racks.map((rack) => (
-          <ServerRackCabinet3D
+          <RealisticRackCabinet3D
             key={rack.id}
             rack={rack}
             simulationState={simulationState}
@@ -418,8 +224,13 @@ function DataHall3D({
             isXrayMode={isXrayMode}
             isSelected={selectedRackId === rack.id}
             selectedGpuId={selectedGpuId}
+            extendedTrayId={extendedTrayId}
+            allTraysOpen={allTraysOpen}
+            theme={theme}
             onSelectRack={onSelectRack}
             onSelectGpu={onSelectGpu}
+            onToggleExtendTray={onToggleExtendTray}
+            onHoverComponent={onHoverComponent}
           />
         ))}
 
@@ -444,12 +255,16 @@ function DataHall3D({
  */
 function CameraController({
   cameraPreset,
+  rackViewMode = 'front',
   selection,
   halls,
+  extendedTrayId,
 }: {
   cameraPreset: CameraPreset;
+  rackViewMode?: RackViewMode;
   selection: SelectionState;
   halls: HallConfig[];
+  extendedTrayId?: string | null;
 }) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
@@ -472,7 +287,7 @@ function CameraController({
       return { targetPos: new THREE.Vector3(0, 0, 0), camPos: new THREE.Vector3(48, 44, 56) };
     }
 
-    // Contextual selection drilldown target
+    // Contextual selection drilldown target for specific GPU
     if (selection.level === 'gpu' && selection.gpuId) {
       for (const h of halls) {
         for (const r of h.racks) {
@@ -480,27 +295,44 @@ function CameraController({
           if (g) {
             const rx = r.position[0];
             const rz = r.position[2];
+            const facing = r.facingZ > 0 ? 1 : -1;
             const gy = (g.slotU * 0.044) + 0.1;
-            const camZOffset = r.facingZ > 0 ? 2.2 : -2.2;
+
+            // Close-up angle focusing on the extracted compute tray
             return {
-              targetPos: new THREE.Vector3(rx, gy, rz),
-              camPos: new THREE.Vector3(rx, gy + 0.3, rz + camZOffset),
+              targetPos: new THREE.Vector3(rx, gy + 0.04, rz + facing * 0.52),
+              camPos: new THREE.Vector3(rx, gy + 0.45, rz + facing * 1.45),
             };
           }
         }
       }
     }
 
+    // Contextual selection for Rack (with Front / Rear / Close-up presets)
     if (selection.level === 'rack' && selection.rackId) {
       for (const h of halls) {
         const r = h.racks.find((rack) => rack.id === selection.rackId);
         if (r) {
           const rx = r.position[0];
           const rz = r.position[2];
-          const camZOffset = r.facingZ > 0 ? 3.8 : -3.8;
+          const facing = r.facingZ > 0 ? 1 : -1;
+
+          if (rackViewMode === 'rear') {
+            return {
+              targetPos: new THREE.Vector3(rx, 1.1, rz),
+              camPos: new THREE.Vector3(rx, 1.6, rz - facing * 2.8),
+            };
+          }
+          if (rackViewMode === 'close' || extendedTrayId) {
+            return {
+              targetPos: new THREE.Vector3(rx, 1.05, rz + facing * 0.42),
+              camPos: new THREE.Vector3(rx, 1.75, rz + facing * 1.9),
+            };
+          }
+          // Default front rack inspection view
           return {
-            targetPos: new THREE.Vector3(rx, 1.2, rz),
-            camPos: new THREE.Vector3(rx, 2.4, rz + camZOffset),
+            targetPos: new THREE.Vector3(rx, 1.1, rz),
+            camPos: new THREE.Vector3(rx, 1.7, rz + facing * 2.8),
           };
         }
       }
@@ -518,7 +350,7 @@ function CameraController({
 
     // Default facility framing
     return { targetPos: new THREE.Vector3(0, 0, 0), camPos: new THREE.Vector3(0, 52, 64) };
-  }, [cameraPreset, selection, halls]);
+  }, [cameraPreset, rackViewMode, selection, halls, extendedTrayId]);
 
   useFrame(() => {
     if (controlsRef.current && cameraPreset !== 'free') {
@@ -533,7 +365,7 @@ function CameraController({
       ref={controlsRef}
       makeDefault
       maxPolarAngle={cameraPreset === 'topDown' ? 0.001 : Math.PI * 0.48}
-      minDistance={1.0}
+      minDistance={0.8}
       maxDistance={220}
       enableDamping
       dampingFactor={0.07}
@@ -553,48 +385,76 @@ export default function FacilityScene3D({
   traceMode,
   selectedTraceLoop,
   cameraPreset,
+  rackViewMode = 'front',
   isXrayMode,
+  extendedTrayId = null,
+  allTraysOpen = false,
+  theme = 'dark',
   onSelectCampus,
   onSelectHall,
   onSelectRack,
   onSelectGpu,
+  onToggleExtendTray,
+  onHoverComponent,
   onSelectComponent,
 }: FacilitySceneProps) {
+  const isLight = theme === 'light';
+
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ fov: 42, position: [0, 52, 64], near: 0.5, far: 600 }}
+      camera={{ fov: 42, position: [0, 52, 64], near: 0.3, far: 600 }}
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) {
           onSelectCampus();
         }
       }}
     >
-      <color attach="background" args={['#080c16']} />
+      <color attach="background" args={[isLight ? '#e2e8f0' : '#080c16']} />
 
-      {/* Cinematic Lighting Rig */}
-      <ambientLight intensity={1.1} />
-      <directionalLight position={[40, 60, 50]} intensity={2.0} castShadow />
-      <directionalLight position={[-40, 45, -50]} intensity={1.2} />
+      {/* Cinematic Balanced Lighting Rig */}
+      <ambientLight intensity={isLight ? 1.25 : 1.1} color={isLight ? '#ffffff' : '#f8fafc'} />
+      <directionalLight
+        position={[40, 60, 50]}
+        intensity={isLight ? 1.6 : 2.0}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+      />
+      <directionalLight
+        position={[-40, 45, -50]}
+        intensity={isLight ? 0.9 : 1.2}
+        color={isLight ? '#e0f2fe' : '#ffffff'}
+      />
 
       {/* Campus Concrete Base Slab & Floor Grid */}
-      <gridHelper args={[180, 90, '#334155', '#1e293b']} position={[0, 0.001, 0]} />
+      <gridHelper
+        args={[180, 90, isLight ? '#94a3b8' : '#334155', isLight ? '#cbd5e1' : '#1e293b']}
+        position={[0, 0.001, 0]}
+      />
       <mesh position={[0, -0.1, 0]}>
         <boxGeometry args={[100, 0.2, 92]} />
-        <meshStandardMaterial color="#0b1329" metalness={0.4} roughness={0.4} />
+        <meshStandardMaterial
+          color={isLight ? '#f1f5f9' : '#0b1329'}
+          metalness={0.3}
+          roughness={0.5}
+        />
       </mesh>
 
       {/* Central Concourse Walkway Corridor */}
       <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8.0, 76]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.5} roughness={0.3} />
+        <meshStandardMaterial
+          color={isLight ? '#e2e8f0' : '#1e293b'}
+          metalness={0.4}
+          roughness={0.3}
+        />
       </mesh>
 
       {/* Central Walkway Safety Boundary Stripes */}
       {[-3.9, 3.9].map((sx) => (
         <mesh key={sx} position={[sx, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[0.15, 76]} />
-          <meshBasicMaterial color="#38bdf8" />
+          <meshBasicMaterial color={isLight ? '#0284c7' : '#38bdf8'} />
         </mesh>
       ))}
 
@@ -606,6 +466,9 @@ export default function FacilityScene3D({
           isSelected={selection.hallId === hall.id}
           selectedRackId={selection.rackId}
           selectedGpuId={selection.gpuId}
+          extendedTrayId={extendedTrayId}
+          allTraysOpen={allTraysOpen}
+          theme={theme}
           simulationState={simulationState}
           layers={layers}
           heatmapMode={heatmapMode}
@@ -613,6 +476,8 @@ export default function FacilityScene3D({
           onSelectHall={onSelectHall}
           onSelectRack={onSelectRack}
           onSelectGpu={onSelectGpu}
+          onToggleExtendTray={onToggleExtendTray}
+          onHoverComponent={onHoverComponent}
         />
       ))}
 
@@ -630,8 +495,10 @@ export default function FacilityScene3D({
       {/* Orbit Controls & Camera Preset Controller */}
       <CameraController
         cameraPreset={cameraPreset}
+        rackViewMode={rackViewMode}
         selection={selection}
         halls={halls}
+        extendedTrayId={extendedTrayId}
       />
     </Canvas>
   );

@@ -2,14 +2,19 @@
 /* CONDENSAI INDUSTRIAL DATA CENTER DIGITAL TWIN — CONSOLE STYLESHEET       */
 /* ========================================================================= */
 
-:root {
+:root,
+[data-theme='dark'] {
   --bg-main: #080c16;
+  --bg-header: #0b1120;
   --bg-card: #0f172a;
   --bg-card-subtle: #131e33;
+  --bg-nav: #080d1a;
+  --bg-input: #0f172a;
   --border-color: #1e293b;
   --border-bright: #334155;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
+  --text-secondary: #cbd5e1;
   --accent-cyan: #38bdf8;
   --accent-blue: #0284c7;
   --accent-green: #22c55e;
@@ -19,6 +24,33 @@
   --accent-orange: #f97316;
   --accent-purple: #a855f7;
   --accent-red: #ef4444;
+  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='light'] {
+  --bg-main: #f1f5f9;
+  --bg-header: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f8fafc;
+  --bg-nav: #e2e8f0;
+  --bg-input: #ffffff;
+  --border-color: #e2e8f0;
+  --border-bright: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-secondary: #334155;
+  --accent-cyan: #0284c7;
+  --accent-blue: #0284c7;
+  --accent-green: #16a34a;
+  --accent-emerald: #059669;
+  --accent-yellow: #d97706;
+  --accent-amber: #d97706;
+  --accent-orange: #ea580c;
+  --accent-purple: #9333ea;
+  --accent-red: #dc2626;
+  --shadow-panel: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 /* Master Layout */
@@ -30,12 +62,13 @@
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
   overflow: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Top Global Application Header */
 .dc-header {
   height: 52px;
-  background-color: #0b1120;
+  background-color: var(--bg-header);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -43,6 +76,7 @@
   padding: 0 16px;
   z-index: 100;
   gap: 16px;
+  transition: background-color 0.2s ease;
 }
 
 .dc-brand-group {
@@ -198,7 +232,7 @@
   flex-wrap: wrap;
 }
 
-.dc-floating-tools > * {
+.dc-floating-tools>* {
   pointer-events: auto;
 }
 
@@ -1536,5 +1570,420 @@
 }
 
 .dc-diag-stats strong {
+  color: var(--text-main);
+}
+
+/* ========================================================================= */
+/* THEME TOGGLE, RACK REALISM, RETRACTABLE TRAYS & 144 GPU EXPLORER          */
+/* ========================================================================= */
+
+.dc-theme-toggle-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-nav);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.dc-theme-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.dc-theme-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='light'] .dc-theme-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.dc-theme-btn.active {
+  background: var(--accent-blue);
   color: #ffffff;
+}
+
+/* Rack Action Bar & View Controls */
+.dc-rack-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 8px 10px;
+  background: var(--bg-card-subtle);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.dc-rack-action-btn {
+  background: rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  color: var(--accent-cyan);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.dc-rack-action-btn.active,
+.dc-rack-action-btn:hover {
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+
+.dc-view-mode-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.dc-view-mode-toggle button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.12s ease;
+}
+
+.dc-view-mode-toggle button.active {
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+
+/* 6-GPU Rack Engineering Table */
+.dc-rack-gpus-section {
+  margin-top: 14px;
+}
+
+.dc-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.dc-section-head h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.dc-section-head small {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.dc-gpu-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+}
+
+.dc-gpu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.dc-gpu-table th {
+  text-align: left;
+  padding: 6px 8px;
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dc-gpu-row {
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.12s ease;
+}
+
+.dc-gpu-row:hover {
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.dc-gpu-row.extended {
+  background: rgba(2, 132, 199, 0.15);
+  border-left: 3px solid var(--accent-blue);
+}
+
+.dc-gpu-table td {
+  padding: 6px 8px;
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+.dc-gpu-cell-id {
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.dc-mini-badge {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.dc-mini-badge.hot {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.dc-mini-badge.power {
+  background: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+}
+
+.dc-mini-badge.flow {
+  background: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+}
+
+/* Retractable Tray Controls Banner */
+.dc-tray-controls-banner {
+  margin: 10px 0;
+}
+
+.dc-slide-tray-btn {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 6px;
+  background: var(--accent-blue);
+  color: #ffffff;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.dc-slide-tray-btn.extended {
+  background: #ea580c;
+}
+
+.dc-slide-tray-btn:hover {
+  opacity: 0.9;
+}
+
+.dc-hover-component-badge {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dc-hover-component-badge small {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.dc-hover-component-badge strong {
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+/* Real-Time Sparklines */
+.dc-sparkline-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.dc-spark-card {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dc-spark-card small {
+  font-size: 8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.dc-spark-svg {
+  width: 100%;
+  height: 24px;
+  overflow: visible;
+}
+
+.dc-spark-card strong {
+  font-size: 12px;
+  color: var(--text-main);
+  align-self: flex-end;
+}
+
+/* 144 GPU Explorer Drawer / Modal */
+.dc-gpu-explorer-modal {
+  position: absolute;
+  top: 56px;
+  left: 14px;
+  right: 348px;
+  bottom: 14px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+
+.dc-explorer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card-subtle);
+}
+
+.dc-explorer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dc-explorer-title h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.dc-close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.dc-close-btn:hover {
+  color: var(--text-main);
+}
+
+.dc-explorer-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dc-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dc-filter-group select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.dc-explorer-table-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 16px;
+}
+
+.dc-explorer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.dc-explorer-table th {
+  text-align: left;
+  padding: 8px;
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.dc-explorer-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.dc-inspect-mini-btn {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.dc-inspect-mini-btn:hover {
+  opacity: 0.9;
 }
