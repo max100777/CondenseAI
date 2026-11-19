@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint src/dcim e2e",
-    "test": "node --test src/dcim/model.test.mjs src/dcim/facility.test.mjs src/dcim/simulation.test.mjs src/digital-twin/__tests__/*.mjs",
+    "test": "node --test src/dcim/model.test.mjs src/dcim/facility.test.mjs src/dcim/simulation.test.mjs src/dcim/connectivity.test.mjs src/digital-twin/__tests__/*.mjs",
     "test:e2e": "playwright test -c playwright.dcim.config.ts",
     "seed:campus": "node scripts/seed-campus.mjs"
   },

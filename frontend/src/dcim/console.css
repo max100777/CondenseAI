@@ -232,7 +232,7 @@
   flex-wrap: wrap;
 }
 
-.dc-floating-tools > * {
+.dc-floating-tools>* {
   pointer-events: auto;
 }
 
@@ -1987,4 +1987,3 @@
 .dc-inspect-mini-btn:hover {
   opacity: 0.9;
 }
-
